@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Trading Vitals v0.3.6</title>
+  <title>My Trading Vitals v0.3.7</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -1002,7 +1002,7 @@
 
     .dotplot-tooltip {
       position: absolute;
-      pointer-events: none;
+      pointer-events: auto;
       background: rgba(15, 23, 42, 0.96);
       border-radius: 10px;
       padding: 6px 8px;
@@ -1011,7 +1011,7 @@
       color: var(--text-main);
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.8);
       z-index: 5;
-      max-width: 220px;
+      max-width: 240px;
       display: none;
     }
 
@@ -1021,6 +1021,65 @@
 
     .dotplot-tooltip strong {
       color: var(--accent);
+    }
+
+    .tooltip-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .tooltip-edit-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0;
+    }
+
+    .tooltip-edit-btn:hover {
+      color: var(--accent);
+    }
+
+    .tooltip-note {
+      margin-top: 2px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      max-width: 224px;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+
+    .tooltip-editor {
+      margin-top: 4px;
+    }
+
+    .tooltip-editor textarea {
+      width: 100%;
+      min-height: 46px;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-main);
+      padding: 4px 6px;
+      resize: vertical;
+      font-family: var(--font-main);
+    }
+
+    .tooltip-editor-actions {
+      margin-top: 4px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .dotplot-tooltip button {
+      font-size: 0.68rem;
+      padding: 2px 6px;
     }
   </style>
 </head>
@@ -1036,7 +1095,7 @@
       </div>
       <div class="header-meta">
         <div class="pill">
-          <span>v0.3.6 · Local-Only</span>
+          <span>v0.3.7 · Local-Only</span>
         </div>
       </div>
     </header>
@@ -1513,7 +1572,7 @@
             </div>
             <p class="hint-text" style="margin-top:8px;">
               Dot plot shows each trade’s P&amp;L, colored by winner vs loser for the current filtered scope.
-              Hover a dot to see the trade details.
+              Hover a dot to see the trade details, and click the pencil icon to add or update a note directly.
             </p>
           </div>
         </div>
@@ -1532,6 +1591,7 @@
       let lastRenderMetrics = null;
       let dotPlotPoints = [];
       let dotplotTooltipEl = null;
+      let currentTooltipTradeId = null;
 
       const el = (id) => document.getElementById(id);
 
@@ -2778,6 +2838,7 @@
 
       function closeModal() {
         if (detailModal) detailModal.style.display = "none";
+        hideDotplotTooltip();
       }
 
       function openWinModal() {
@@ -2956,6 +3017,57 @@
         return "—";
       }
 
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function wireTooltipEditHandlers(trade) {
+        if (!dotplotTooltipEl) return;
+        const editBtn = dotplotTooltipEl.querySelector(".tooltip-edit-btn");
+        const editor = dotplotTooltipEl.querySelector(".tooltip-editor");
+        const textarea = editor ? editor.querySelector("textarea") : null;
+        const saveBtn = editor ? editor.querySelector(".tooltip-save") : null;
+        const cancelBtn = editor ? editor.querySelector(".tooltip-cancel") : null;
+
+        if (editBtn) {
+          editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!editor || !textarea) return;
+            textarea.value = trade.notes || "";
+            editor.style.display = "block";
+          });
+        }
+
+        if (cancelBtn) {
+          cancelBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (editor) editor.style.display = "none";
+          });
+        }
+
+        if (saveBtn && textarea) {
+          saveBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const newNote = textarea.value.trim();
+            const idx = trades.findIndex((t) => t.id === trade.id);
+            if (idx >= 0) {
+              trades[idx].notes = newNote;
+              saveTrades();
+              showToast("Note updated from dot plot");
+              filteredTrades = null;
+              applyFilters();
+              drawDotPlot();
+            }
+          });
+        }
+      }
+
       function handleDotplotHover(e) {
         if (!dotPlotPoints.length || !dotplotTooltipEl) {
           hideDotplotTooltip();
@@ -2982,6 +3094,7 @@
         }
 
         const trade = closest.trade;
+        currentTooltipTradeId = trade.id;
         const pnl = trade.pnl;
         const cost =
           trade.entry != null && trade.size != null
@@ -2995,20 +3108,28 @@
           pnlLine += " (" + (pnlPct * 100).toFixed(1) + "% of cost)";
         }
 
+        const notesDisplay =
+          trade.notes && trade.notes.trim().length
+            ? '<div class="tooltip-note">Note: ' + escapeHtml(trade.notes) + "</div>"
+            : "";
+
         dotplotTooltipEl.innerHTML =
-          "<div><strong>" +
-          (trade.ticker || "—") +
-          "</strong> · " +
-          optionType +
+          '<div class="tooltip-header">' +
+            "<div><strong>" + (trade.ticker || "—") + "</strong> · " + optionType + "</div>" +
+            '<button class="tooltip-edit-btn" title="Edit note">✎</button>' +
           "</div>" +
-          "<div>" +
-          (trade.date || "—") +
-          " · " +
-          (trade.direction || "") +
-          "</div>" +
-          "<div>" +
-          pnlLine +
+          "<div>" + (trade.date || "—") + " · " + (trade.direction || "") + "</div>" +
+          "<div>" + pnlLine + "</div>" +
+          notesDisplay +
+          '<div class="tooltip-editor" style="display:none;">' +
+            '<textarea placeholder="Add or update note…"></textarea>' +
+            '<div class="tooltip-editor-actions">' +
+              '<button class="subtle tooltip-cancel">Cancel</button>' +
+              '<button class="soft-accent tooltip-save">Save</button>' +
+            "</div>" +
           "</div>";
+
+        wireTooltipEditHandlers(trade);
 
         const tooltipWidth = dotplotTooltipEl.offsetWidth || 160;
         const tooltipHeight = dotplotTooltipEl.offsetHeight || 60;
