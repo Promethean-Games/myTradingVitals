@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Trading Vitals v0.3.5</title>
+  <title>My Trading Vitals v0.3.6</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -498,25 +498,6 @@
       background: currentColor;
     }
 
-    .carousel-dots {
-      display: inline-flex;
-      gap: 4px;
-      vertical-align: middle;
-    }
-
-    .carousel-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      background: transparent;
-    }
-
-    .carousel-dot.active {
-      background: rgba(148, 163, 184, 0.95);
-      border-color: rgba(148, 163, 184, 1);
-    }
-
     .kpi-apy-row {
       font-size: 0.68rem;
     }
@@ -854,14 +835,26 @@
       opacity: 0.7;
     }
 
-    .panel.collapsible .panel-header {
-      cursor: pointer;
-    }
-
     .panel.collapsible .panel-header-main {
       display: flex;
       flex-direction: column;
       gap: 2px;
+    }
+
+    .accordion-toggle {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .accordion-toggle:hover {
+      background: rgba(148, 163, 184, 0.12);
     }
 
     .accordion-icon {
@@ -987,6 +980,48 @@
       display: block;
       margin-top: 2px;
     }
+
+    .apy-panel {
+      margin-top: 8px;
+      padding: 8px 9px;
+      border-radius: var(--radius-md);
+      background: radial-gradient(circle at top, #020617, #020617);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .apy-body {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .dotplot-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 10px;
+      padding: 6px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      font-size: 0.72rem;
+      color: var(--text-main);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.8);
+      z-index: 5;
+      max-width: 220px;
+      display: none;
+    }
+
+    .dotplot-tooltip div {
+      white-space: nowrap;
+    }
+
+    .dotplot-tooltip strong {
+      color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -1001,7 +1036,7 @@
       </div>
       <div class="header-meta">
         <div class="pill">
-          <span>v0.3.5 · Local-Only</span>
+          <span>v0.3.6 · Local-Only</span>
         </div>
       </div>
     </header>
@@ -1014,7 +1049,9 @@
               <div class="panel-title">Import / Export</div>
               <div class="panel-subtitle">Hydrate or back up your journal</div>
             </div>
-            <div class="accordion-icon">&#9662;</div>
+            <button type="button" class="accordion-toggle" aria-label="Toggle panel">
+              <span class="accordion-icon">&#9662;</span>
+            </button>
           </div>
           <div class="panel-body">
             <div class="panel-tag-row">
@@ -1057,7 +1094,9 @@
               <div class="panel-title">Quick Add Trade</div>
               <div class="panel-subtitle">Log trades without breaking flow</div>
             </div>
-            <div class="accordion-icon">&#9662;</div>
+            <button type="button" class="accordion-toggle" aria-label="Toggle panel">
+              <span class="accordion-icon">&#9662;</span>
+            </button>
           </div>
           <div class="panel-body">
             <form id="tradeForm">
@@ -1154,7 +1193,9 @@
               <div class="panel-title">Data & Formatting Rules</div>
               <div class="panel-subtitle">How CSV / JSON is interpreted</div>
             </div>
-            <div class="accordion-icon">&#9662;</div>
+            <button type="button" class="accordion-toggle" aria-label="Toggle panel">
+              <span class="accordion-icon">&#9662;</span>
+            </button>
           </div>
           <div class="panel-body">
             <div class="hint-text">
@@ -1186,7 +1227,9 @@
             <div class="panel-subtitle">
               <span id="kpiScopeLabel">Scope: All trades</span>
             </div>
-            <div class="accordion-icon">&#9662;</div>
+            <button type="button" class="accordion-toggle" aria-label="Toggle panel">
+              <span class="accordion-icon">&#9662;</span>
+            </button>
           </div>
           <div class="panel-body">
             <div class="kpi-grid">
@@ -1226,28 +1269,29 @@
                 </div>
               </div>
 
-              <div class="kpi-card clickable" id="kpiPnlCard">
+              <div class="kpi-card" id="kpiPnlCard">
                 <div class="kpi-label">P&amp;L Panel</div>
                 <div class="kpi-value" id="kpiPnlPrimary">—</div>
                 <div class="kpi-meta-row">
                   <span class="kpi-tag" id="kpiPnlTag">Realized only</span>
-                  <span class="kpi-delta" id="kpiPnlToggle">
+                  <span class="kpi-delta">
                     <span class="kpi-dot"></span>
-                    <span>
-                      <span class="carousel-dots">
-                        <span class="carousel-dot active" id="dotPnl"></span>
-                        <span class="carousel-dot" id="dotApy"></span>
-                      </span>
-                      &nbsp;<span id="kpiPnlModeLabel">Mode: P&amp;L</span>
-                    </span>
+                    <span>Per-trade expectancy</span>
                   </span>
                 </div>
-                <div class="kpi-apy-row" id="kpiApyRow" style="display:none; margin-top:4px;">
-                  <div class="chip-group" id="apyChips"></div>
-                  <div class="input-group" style="margin-top:4px;">
-                    <label for="capitalBasis">Capital Basis</label>
-                    <input type="number" id="capitalBasis" placeholder="10000" min="1" step="100" />
-                  </div>
+              </div>
+            </div>
+
+            <div class="apy-panel">
+              <div class="panel-tag-row" style="margin-bottom:4px;">
+                <span class="tag tag-accent">APY HUD</span>
+                <span class="tag">Annualized view on realized P&amp;L</span>
+              </div>
+              <div class="apy-body">
+                <div class="chip-group" id="apyChips"></div>
+                <div class="input-group" style="max-width:140px;">
+                  <label for="capitalBasis">Capital Basis</label>
+                  <input type="number" id="capitalBasis" placeholder="10000" min="1" step="100" />
                 </div>
               </div>
             </div>
@@ -1256,11 +1300,13 @@
 
         <section class="panel collapsible open" data-accordion="filters">
           <div class="panel-header">
-            <div>
+            <div class="panel-header-main">
               <div class="panel-title">Filters</div>
               <div class="panel-subtitle">Slice your journal by context</div>
             </div>
-            <div class="accordion-icon">&#9662;</div>
+            <button type="button" class="accordion-toggle" aria-label="Toggle panel">
+              <span class="accordion-icon">&#9662;</span>
+            </button>
           </div>
           <div class="panel-body">
             <div class="filters-row">
@@ -1326,7 +1372,7 @@
 
         <section class="panel collapsible open" data-accordion="trades">
           <div class="panel-header">
-            <div>
+            <div class="panel-header-main">
               <div class="panel-title">Trades</div>
               <div class="panel-subtitle">
                 <span id="tradeCountLabel">0 trades logged</span>
@@ -1335,7 +1381,9 @@
             <div class="panel-subtitle">
               <span>Click headers to sort</span>
             </div>
-            <div class="accordion-icon">&#9662;</div>
+            <button type="button" class="accordion-toggle" aria-label="Toggle panel">
+              <span class="accordion-icon">&#9662;</span>
+            </button>
           </div>
 
           <div class="panel-body">
@@ -1461,9 +1509,11 @@
           <div class="modal-section" id="modalDotPlotSection">
             <div class="modal-chart">
               <canvas id="dotplotCanvas"></canvas>
+              <div class="dotplot-tooltip" id="dotplotTooltip"></div>
             </div>
             <p class="hint-text" style="margin-top:8px;">
               Dot plot shows each trade’s P&amp;L, colored by winner vs loser for the current filtered scope.
+              Hover a dot to see the trade details.
             </p>
           </div>
         </div>
@@ -1479,8 +1529,9 @@
       let filteredTrades = null;
       let currentSort = { key: "date", direction: "desc" };
       let activeDirectionFilter = "all";
-      let pnlViewMode = "pnl";
       let lastRenderMetrics = null;
+      let dotPlotPoints = [];
+      let dotplotTooltipEl = null;
 
       const el = (id) => document.getElementById(id);
 
@@ -1520,19 +1571,14 @@
 
       const kpiPnlPrimary = el("kpiPnlPrimary");
       const kpiPnlTag = el("kpiPnlTag");
-      const kpiPnlModeLabel = el("kpiPnlModeLabel");
-      const kpiApyRow = el("kpiApyRow");
       const apyChips = el("apyChips");
       const capitalBasisInput = el("capitalBasis");
-      const dotPnl = el("dotPnl");
-      const dotApy = el("dotApy");
 
       const toastContainer = el("toastContainer");
 
       const kpiWinCard = el("kpiWinCard");
       const kpiMacdCard = el("kpiMacdCard");
       const kpiBestCard = el("kpiBestCard");
-      const kpiPnlCard = el("kpiPnlCard");
 
       const detailModal = el("detailModal");
       const modalTitle = el("modalTitle");
@@ -1545,6 +1591,7 @@
       const dotplotCanvas = el("dotplotCanvas");
       const macdMinInput = el("macdMin");
       const macdMaxInput = el("macdMax");
+      dotplotTooltipEl = el("dotplotTooltip");
 
       const modalWinRateVal = el("modalWinRateVal");
       const modalTradeCountVal = el("modalTradeCountVal");
@@ -1941,18 +1988,14 @@
         let losses = 0;
         let flats = 0;
         let totalPnl = 0;
-        let bestPnl = null;
-        let worstPnl = null;
-        let countPnl = 0;
+        const pnls = [];
 
         sorted.forEach((t) => {
           const pnl = t.pnl;
 
           if (Number.isFinite(pnl)) {
+            pnls.push(pnl);
             totalPnl += pnl;
-            countPnl += 1;
-            if (bestPnl === null || pnl > bestPnl) bestPnl = pnl;
-            if (worstPnl === null || pnl < worstPnl) worstPnl = pnl;
 
             if (pnl > 0) wins += 1;
             else if (pnl < 0) losses += 1;
@@ -2003,6 +2046,10 @@
           (totalTrades === 1 ? "" : "s") +
           (filteredTrades ? " (filtered)" : "");
 
+        const countPnl = pnls.length;
+        const bestPnl = countPnl ? Math.max(...pnls) : null;
+        const worstPnl = countPnl ? Math.min(...pnls) : null;
+
         badgeWins.textContent = wins + " win" + (wins === 1 ? "" : "s");
         badgeLosses.textContent = losses + " loss" + (losses === 1 ? "" : "es");
         badgeFlats.textContent = flats + " breakeven";
@@ -2046,7 +2093,7 @@
         };
 
         updatePnlCard();
-
+        updateApyHud(withDerived);
         updateSortBadges();
 
         tradesTbody.querySelectorAll(".btn-delete").forEach((btn) => {
@@ -2076,49 +2123,32 @@
 
       function updatePnlCard() {
         if (!lastRenderMetrics) return;
-        const { totalPnl, avgPnl, trades: withDerived } = lastRenderMetrics;
+        const { totalPnl, avgPnl } = lastRenderMetrics;
+        kpiPnlPrimary.textContent = formatCurrency(totalPnl);
+        kpiPnlTag.textContent = "Avg per trade: " + formatCurrency(avgPnl);
+      }
 
+      function updateApyHud(tradesArr) {
+        if (!apyChips) return;
         const basisVal = capitalBasisInput && capitalBasisInput.value
           ? Number(capitalBasisInput.value)
           : null;
         const basis = basisVal && basisVal > 0 ? basisVal : 10000;
-
-        if (pnlViewMode === "pnl") {
-          kpiPnlPrimary.textContent = formatCurrency(totalPnl);
-          kpiPnlTag.textContent = "Avg per trade: " + formatCurrency(avgPnl);
-          kpiPnlModeLabel.textContent = "Mode: P&L";
-          if (kpiApyRow) kpiApyRow.style.display = "none";
-          if (dotPnl && dotApy) {
-            dotPnl.classList.add("active");
-            dotApy.classList.remove("active");
-          }
-        } else {
-          const apyMetrics = computeApyMetrics(withDerived, basis);
-          const chips = [];
-          const mapping = [
-            ["1D", apyMetrics.d1],
-            ["7D", apyMetrics.d7],
-            ["14D", apyMetrics.d14],
-            ["30D", apyMetrics.d30],
-            ["3M", apyMetrics.d90],
-            ["YTD", apyMetrics.ytd],
-            ["ALL", apyMetrics.all],
-          ];
-          mapping.forEach(([label, val]) => {
-            chips.push(
-              `<span class="chip">${label} ${formatPercent(val)}</span>`
-            );
-          });
-          apyChips.innerHTML = chips.join("");
-          kpiPnlPrimary.textContent = formatPercent(apyMetrics.all);
-          kpiPnlTag.textContent = "All-time APY, basis $" + basis.toFixed(0);
-          kpiPnlModeLabel.textContent = "Mode: APY";
-          if (kpiApyRow) kpiApyRow.style.display = "block";
-          if (dotPnl && dotApy) {
-            dotPnl.classList.remove("active");
-            dotApy.classList.add("active");
-          }
-        }
+        const metrics = computeApyMetrics(tradesArr, basis);
+        const mapping = [
+          ["1D", metrics.d1],
+          ["7D", metrics.d7],
+          ["14D", metrics.d14],
+          ["30D", metrics.d30],
+          ["3M", metrics.d90],
+          ["YTD", metrics.ytd],
+          ["ALL", metrics.all],
+        ];
+        let html = "";
+        mapping.forEach(([label, val]) => {
+          html += '<span class="chip">' + label + " " + formatPercent(val) + "</span>";
+        });
+        apyChips.innerHTML = html;
       }
 
       function populateFormForEdit(trade) {
@@ -2658,17 +2688,11 @@
           thead.addEventListener("click", handleSortClick);
         }
 
-        if (kpiPnlCard) {
-          kpiPnlCard.addEventListener("click", (e) => {
-            if (e.target.closest("#capitalBasis")) return;
-            pnlViewMode = pnlViewMode === "pnl" ? "apy" : "pnl";
-            updatePnlCard();
-          });
-        }
-
         if (capitalBasisInput) {
           capitalBasisInput.addEventListener("change", () => {
-            if (pnlViewMode === "apy") updatePnlCard();
+            if (lastRenderMetrics) {
+              updateApyHud(lastRenderMetrics.trades);
+            }
           });
         }
 
@@ -2708,6 +2732,11 @@
             drawMacdChart();
           });
         }
+
+        if (dotplotCanvas) {
+          dotplotCanvas.addEventListener("mousemove", handleDotplotHover);
+          dotplotCanvas.addEventListener("mouseleave", hideDotplotTooltip);
+        }
       }
 
       function initDefaults() {
@@ -2726,10 +2755,10 @@
 
       function initAccordions() {
         document.querySelectorAll(".panel.collapsible").forEach((panel) => {
-          const header = panel.querySelector(".panel-header");
-          if (!header) return;
-          header.addEventListener("click", (e) => {
-            if (e.target.closest("button")) return;
+          const toggle = panel.querySelector(".accordion-toggle");
+          if (!toggle) return;
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
             panel.classList.toggle("open");
           });
         });
@@ -2867,6 +2896,9 @@
         ctx.fillStyle = "#020617";
         ctx.fillRect(0, 0, width, height);
 
+        dotPlotPoints = [];
+        hideDotplotTooltip();
+
         if (!tradesArr.length) {
           ctx.fillStyle = "#9ca8d9";
           ctx.font = "12px system-ui";
@@ -2906,6 +2938,7 @@
           else ctx.fillStyle = "#9ca8d9";
           ctx.arc(x, y, 3, 0, Math.PI * 2);
           ctx.fill();
+          dotPlotPoints.push({ x, y, trade: t });
         });
 
         ctx.fillStyle = "#9ca8d9";
@@ -2914,2225 +2947,87 @@
         ctx.fillText(formatCurrency(minY), 4, yScale(minY) + 3);
       }
 
+      function inferOptionType(trade) {
+        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
+          .join(" ")
+          .toLowerCase();
+        if (text.includes("call")) return "Call";
+        if (text.includes("put")) return "Put";
+        return "—";
+      }
+
+      function handleDotplotHover(e) {
+        if (!dotPlotPoints.length || !dotplotTooltipEl) {
+          hideDotplotTooltip();
+          return;
+        }
+        const rect = dotplotCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const radius = 6;
+        let closest = null;
+        let minDist = Infinity;
+        dotPlotPoints.forEach(pt => {
+          const dx = x - pt.x;
+          const dy = y - pt.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < radius && dist < minDist) {
+            minDist = dist;
+            closest = pt;
+          }
+        });
+        if (!closest) {
+          hideDotplotTooltip();
+          return;
+        }
+
+        const trade = closest.trade;
+        const pnl = trade.pnl;
+        const cost =
+          trade.entry != null && trade.size != null
+            ? Math.abs(trade.entry * trade.size)
+            : null;
+        const pnlPct = cost && pnl != null ? pnl / cost : null;
+        const optionType = inferOptionType(trade);
+
+        let pnlLine = "P/L: " + formatCurrency(pnl);
+        if (pnlPct != null && isFinite(pnlPct)) {
+          pnlLine += " (" + (pnlPct * 100).toFixed(1) + "% of cost)";
+        }
+
+        dotplotTooltipEl.innerHTML =
+          "<div><strong>" +
+          (trade.ticker || "—") +
+          "</strong> · " +
+          optionType +
+          "</div>" +
+          "<div>" +
+          (trade.date || "—") +
+          " · " +
+          (trade.direction || "") +
+          "</div>" +
+          "<div>" +
+          pnlLine +
+          "</div>";
+
+        const tooltipWidth = dotplotTooltipEl.offsetWidth || 160;
+        const tooltipHeight = dotplotTooltipEl.offsetHeight || 60;
+        let left = x + 10;
+        let top = y + 10;
+        if (left + tooltipWidth > rect.width) left = x - tooltipWidth - 10;
+        if (top + tooltipHeight > rect.height) top = y - tooltipHeight - 10;
+        dotplotTooltipEl.style.left = left + "px";
+        dotplotTooltipEl.style.top = top + "px";
+        dotplotTooltipEl.style.display = "block";
+      }
+
+      function hideDotplotTooltip() {
+        if (dotplotTooltipEl) dotplotTooltipEl.style.display = "none";
+      }
+
       function openDotPlotModal() {
         openModalSection("modalDotPlotSection", "Best / Worst Dot Plot");
         drawDotPlot();
-      }
-
-      function init() {
-        loadTrades();
-        initEvents();
-        initDefaults();
-        initAccordions();
-        filteredTrades = null;
-        applyFilters();
-      }
-
-      document.addEventListener("DOMContentLoaded", init);
-    })();
-  </script>
-</body>
-</html>
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-    }
-
-    body {
-      background: radial-gradient(circle at top, #141a3a 0, #050713 55%, #000 100%);
-      color: var(--text-main);
-      font-family: var(--font-main);
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-
-    .app-shell {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      gap: 16px;
-    }
-
-    header.app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 18px;
-      border-radius: 999px;
-      background: radial-gradient(circle at top left, #1a2347, #06081a);
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      position: sticky;
-      top: 8px;
-      z-index: 20;
-      backdrop-filter: blur(14px);
-    }
-
-    .brand-lockup {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
-      background: conic-gradient(
-        from 210deg,
-        #26d981,
-        #4ba3ff,
-        #9c6bff,
-        #ff4b6a,
-        #ffc857,
-        #26d981
-      );
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
-    }
-
-    .brand-mark::after {
-      content: "";
-      width: 72%;
-      height: 72%;
-      border-radius: 10px;
-      background: radial-gradient(circle at 20% 0%, #1f2937, #020617);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .brand-text span.title {
-      font-weight: 620;
-      letter-spacing: 0.06em;
-      font-size: 0.88rem;
-      text-transform: uppercase;
-    }
-
-    .brand-text span.subtitle {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-    }
-
-    .header-meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .pill {
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(15, 23, 42, 0.6);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .pill-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--accent-strong);
-      box-shadow: 0 0 0 4px rgba(38, 217, 129, 0.25);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(260px, 340px) minmax(0, 1.8fr);
-      gap: 16px;
-      align-items: flex-start;
-    }
-
-    @media (max-width: 980px) {
-      .layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      header.app-header {
-        flex-direction: column;
-        align-items: flex-start;
-        border-radius: 18px;
-      }
-    }
-
-    .panel {
-      background: radial-gradient(circle at top left, #151936, #050716);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-subtle);
-      box-shadow: var(--shadow-soft);
-      padding: 14px 14px 12px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      border: 1px solid transparent;
-      background: linear-gradient(
-          120deg,
-          rgba(75, 163, 255, 0.4),
-          rgba(38, 217, 129, 0.3),
-          transparent 55%
-        )
-        border-box;
-      mask:
-        linear-gradient(#000 0 0) padding-box,
-        linear-gradient(#000 0 0);
-      mask-composite: exclude;
-      opacity: 0.25;
-      pointer-events: none;
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .panel-title {
-      font-size: 0.83rem;
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--text-muted);
-    }
-
-    .panel-subtitle {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      opacity: 0.8;
-    }
-
-    .panel-body {
-      border-radius: calc(var(--radius-lg) - 8px);
-      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.7), #020617);
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      padding: 10px 10px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .panel-tag-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-      flex-wrap: wrap;
-    }
-
-    .tag {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      color: var(--text-muted);
-      background: rgba(15, 23, 42, 0.8);
-    }
-
-    .tag-accent {
-      border-color: rgba(75, 163, 255, 0.7);
-      color: var(--accent);
-      background: rgba(15, 23, 42, 0.9);
-    }
-
-    .input-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    label {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    input,
-    select,
-    textarea {
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      padding: 7px 10px;
-      color: var(--text-main);
-      font-size: 0.78rem;
-      outline: none;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
-        background var(--transition-fast), transform 120ms ease-out;
-      font-family: var(--font-main);
-    }
-
-    textarea {
-      border-radius: 14px;
-      min-height: 60px;
-      resize: vertical;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: rgba(75, 163, 255, 0.9);
-      box-shadow: 0 0 0 1px rgba(75, 163, 255, 0.7);
-      background: rgba(15, 23, 42, 1);
-      transform: translateY(-0.5px);
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: rgba(148, 163, 184, 0.55);
-    }
-
-    /* Make date/time pickers play nice in dark mode */
-    input[type="date"],
-    input[type="time"],
-    input[type="datetime-local"],
-    input[type="month"] {
-      color-scheme: dark;
-    }
-
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator,
-    input[type="datetime-local"]::-webkit-calendar-picker-indicator,
-    input[type="month"]::-webkit-calendar-picker-indicator {
-      filter: invert(1);
-    }
-
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 0.76rem;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text-main);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      transition: background var(--transition-fast), transform var(--transition-fast),
-        box-shadow var(--transition-fast), border-color var(--transition-fast),
-        color var(--transition-fast);
-    }
-
-    button.primary {
-      background: linear-gradient(130deg, #4ba3ff, #26d981);
-      border-color: transparent;
-      color: #020617;
-      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.55);
-    }
-
-    button.primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 32px rgba(37, 99, 235, 0.7);
-    }
-
-    button.subtle {
-      background: rgba(15, 23, 42, 0.92);
-      border-color: rgba(148, 163, 184, 0.6);
-      color: var(--text-muted);
-    }
-
-    button.soft-accent {
-      background: rgba(75, 163, 255, 0.08);
-      border-color: rgba(75, 163, 255, 0.5);
-      color: var(--accent);
-    }
-
-    button.danger {
-      background: rgba(248, 113, 113, 0.08);
-      border-color: rgba(248, 113, 113, 0.7);
-      color: var(--danger);
-    }
-
-    button:active {
-      transform: translateY(1px) scale(0.995);
-      box-shadow: none;
-    }
-
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-      pointer-events: none;
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    @media (max-width: 1200px) {
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 640px) {
-      .kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    .kpi-card {
-      border-radius: var(--radius-md);
-      background: radial-gradient(circle at top, #1f2937, #020617);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      padding: 8px 9px 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .kpi-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(
-        circle at top,
-        rgba(75, 163, 255, 0.2),
-        transparent 60%
-      );
-      opacity: 0.6;
-      pointer-events: none;
-      mix-blend-mode: screen;
-    }
-
-    .kpi-label {
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--text-muted);
-    }
-
-    .kpi-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    .kpi-meta-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-    }
-
-    .kpi-tag {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-    }
-
-    .kpi-delta {
-      font-size: 0.72rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(22, 163, 74, 0.12);
-      color: var(--win);
-      border: 1px solid rgba(22, 163, 74, 0.6);
-    }
-
-    .kpi-delta.lossy {
-      background: rgba(220, 38, 38, 0.12);
-      color: var(--loss);
-      border-color: rgba(220, 38, 38, 0.6);
-    }
-
-    .kpi-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: currentColor;
-    }
-
-    .table-wrapper {
-      border-radius: var(--radius-lg);
-      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), #020617);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      overflow: hidden;
-      max-height: calc(100vh - 220px);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .table-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 8px 10px;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.9);
-      background: radial-gradient(circle at top, rgba(30, 64, 175, 0.25), transparent);
-    }
-
-    .table-toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .table-toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      padding: 2px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      color: var(--text-muted);
-      background: rgba(15, 23, 42, 0.86);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.9);
-    }
-
-    .badge-dot.win {
-      background: var(--win);
-    }
-
-    .badge-dot.loss {
-      background: var(--loss);
-    }
-
-    .table-scroll {
-      overflow: auto;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(148, 163, 184, 0.7) rgba(15, 23, 42, 1);
-      flex: 1;
-    }
-
-    .table-scroll::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    .table-scroll::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 1);
-    }
-
-    .table-scroll::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.9);
-      border-radius: 999px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.75rem;
-    }
-
-    thead {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: radial-gradient(circle at top, #020617, #020617);
-    }
-
-    th,
-    td {
-      padding: 5px 8px;
-      text-align: left;
-      white-space: nowrap;
-      border-bottom: 1px solid rgba(30, 41, 59, 0.9);
-    }
-
-    th {
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: var(--text-muted);
-      position: relative;
-    }
-
-    th span.sort-indicator {
-      font-size: 0.7rem;
-      opacity: 0.5;
-      margin-left: 4px;
-    }
-
-    tbody tr {
-      transition: background var(--transition-fast), transform var(--transition-fast);
-    }
-
-    tbody tr:nth-child(even) {
-      background: rgba(15, 23, 42, 0.7);
-    }
-
-    tbody tr:nth-child(odd) {
-      background: rgba(15, 23, 42, 0.95);
-    }
-
-    tbody tr:hover {
-      background: rgba(30, 64, 175, 0.46);
-      transform: translateY(-0.5px);
-    }
-
-    .pill-direction {
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      border: 1px solid;
-    }
-
-    .pill-direction.long {
-      border-color: rgba(34, 197, 94, 0.9);
-      color: var(--win);
-      background: rgba(22, 163, 74, 0.12);
-    }
-
-    .pill-direction.short {
-      border-color: rgba(248, 113, 113, 0.85);
-      color: var(--loss);
-      background: rgba(248, 113, 113, 0.12);
-    }
-
-    .pnl-positive {
-      color: var(--win);
-    }
-
-    .pnl-negative {
-      color: var(--loss);
-    }
-
-    .pnl-flat {
-      color: var(--text-muted);
-    }
-
-    .control-chip {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px dashed rgba(148, 163, 184, 0.6);
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .control-chip-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.9);
-    }
-
-    .file-input-wrapper {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .file-input-wrapper input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .file-input-faux {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px dashed rgba(148, 163, 184, 0.7);
-      font-size: 0.75rem;
-      color: var(--text-main);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(15, 23, 42, 0.92);
-    }
-
-    .file-name {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      max-width: 170px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .toast-container {
-      position: fixed;
-      bottom: 14px;
-      right: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 40;
-    }
-
-    .toast {
-      border-radius: 999px;
-      padding: 7px 12px;
-      font-size: 0.78rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: #020617;
-      background: linear-gradient(120deg, #4ba3ff, #26d981);
-      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.84);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-    }
-
-    .toast.toast-error {
-      background: linear-gradient(120deg, #fb7185, #f97316);
-      color: #020617;
-    }
-
-    .toast-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-    }
-
-    .filters-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .filters-row.wide {
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    }
-
-    .radio-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .radio-pill {
-      padding: 4px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      user-select: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(15, 23, 42, 0.95);
-    }
-
-    .radio-pill.active {
-      border-color: rgba(75, 163, 255, 0.95);
-      background: rgba(37, 99, 235, 0.2);
-      color: var(--accent);
-    }
-
-    .radio-pill-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.8);
-      background: transparent;
-    }
-
-    .radio-pill.active .radio-pill-dot {
-      border-color: rgba(75, 163, 255, 0.9);
-      background: rgba(75, 163, 255, 0.8);
-    }
-
-    .empty-state {
-      padding: 18px 14px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-    }
-
-    .empty-state-title {
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    .empty-state-subtitle {
-      font-size: 0.74rem;
-      opacity: 0.9;
-    }
-
-    .chip-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .chip {
-      font-size: 0.7rem;
-      padding: 2px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      color: var(--text-muted);
-      background: rgba(15, 23, 42, 0.9);
-    }
-
-    .chip-session {
-      border-color: rgba(251, 191, 36, 0.8);
-      color: var(--warning);
-    }
-
-    .chip-risk {
-      border-color: rgba(75, 163, 255, 0.8);
-      color: var(--accent);
-    }
-
-    .chip-size {
-      border-color: rgba(148, 163, 184, 0.9);
-    }
-
-    .hint-text {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      opacity: 0.9;
-    }
-
-    .footer-note {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-align: right;
-      margin-top: 4px;
-      opacity: 0.8;
-    }
-
-    .footer-note span {
-      opacity: 0.7;
-    }
-
-    /* Accordion behaviour */
-    .panel.collapsible .panel-header {
-      cursor: pointer;
-    }
-
-    .panel.collapsible .panel-header-main {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .accordion-icon {
-      font-size: 0.8rem;
-      opacity: 0.7;
-      transition: transform var(--transition-fast);
-    }
-
-    .panel.collapsible .accordion-icon {
-      transform: rotate(-90deg);
-    }
-
-    .panel.collapsible.open .accordion-icon {
-      transform: rotate(0deg);
-    }
-
-    .panel.collapsible .panel-body {
-      display: none;
-    }
-
-    .panel.collapsible.open .panel-body {
-      display: flex;
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
-    <header class="app-header">
-      <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true"></div>
-        <div class="brand-text">
-          <span class="title">My Trading Vitals</span>
-          <span class="subtitle">Daily Trade Journal & KPI HUD</span>
-        </div>
-      </div>
-      <div class="header-meta">
-        <div class="pill">
-          <span class="pill-dot"></span>
-          <span>Session Tracker Armed</span>
-        </div>
-        <div class="pill">
-          <span>v0.3.2 · Local-First</span>
-        </div>
-      </div>
-    </header>
-
-    <main class="layout">
-      <section class="left-column">
-        <!-- Import / Export (accordion, collapsed by default) -->
-        <section class="panel collapsible" data-accordion="import">
-          <div class="panel-header">
-            <div class="panel-header-main">
-              <div class="panel-title">Import / Export</div>
-              <div class="panel-subtitle">Hydrate or back up your journal</div>
-            </div>
-            <div class="accordion-icon">&#9662;</div>
-          </div>
-          <div class="panel-body">
-            <div class="panel-tag-row">
-              <span class="tag tag-accent">CSV In / Out</span>
-              <span class="tag">JSON Backup</span>
-            </div>
-
-            <div class="btn-row" style="align-items:center; flex-wrap:wrap;">
-              <div class="file-input-wrapper">
-                <span class="file-input-faux">
-                  <span style="font-size:0.9rem;">⬆</span>
-                  <span>Select file</span>
-                </span>
-                <input type="file" id="importFile" accept=".csv,.json" />
-              </div>
-              <button id="importCsvBtn" class="soft-accent">Import</button>
-              <span id="fileNameLabel" class="file-name"></span>
-            </div>
-
-            <div class="btn-row">
-              <button id="exportCsvBtn" class="subtle">
-                <span>&#128190;</span>
-                <span>Export CSV</span>
-              </button>
-              <button id="exportJsonBtn" class="subtle">
-                <span>&#128196;</span>
-                <span>Export JSON</span>
-              </button>
-              <button id="clearAllBtn" class="danger" title="Clear all local data">
-                <span>&#128465;</span>
-                <span>Clear All</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Quick Add Trade (accordion, collapsed by default) -->
-        <section class="panel collapsible" data-accordion="quick-add">
-          <div class="panel-header">
-            <div class="panel-header-main">
-              <div class="panel-title">Quick Add Trade</div>
-              <div class="panel-subtitle">Log trades without breaking flow</div>
-            </div>
-            <div class="accordion-icon">&#9662;</div>
-          </div>
-          <div class="panel-body">
-            <form id="tradeForm">
-              <div class="filters-row wide">
-                <div class="input-group">
-                  <label for="date">Date</label>
-                  <input type="date" id="date" required />
-                </div>
-                <div class="input-group">
-                  <label for="sessionTime">Time</label>
-                  <input type="time" id="sessionTime" />
-                </div>
-              </div>
-
-              <div class="filters-row">
-                <div class="input-group">
-                  <label for="ticker">Ticker</label>
-                  <input type="text" id="ticker" placeholder="SPY, QQQ…" />
-                </div>
-                <div class="input-group">
-                  <label for="direction">Direction</label>
-                  <select id="direction">
-                    <option value="Long">Long</option>
-                    <option value="Short">Short</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="filters-row">
-                <div class="input-group">
-                  <label for="size">Size</label>
-                  <input type="number" id="size" placeholder="Contracts / shares" min="0" step="1" />
-                </div>
-                <div class="input-group">
-                  <label for="entry">Entry</label>
-                  <input type="number" id="entry" placeholder="Entry price" step="0.01" />
-                </div>
-              </div>
-
-              <div class="filters-row">
-                <div class="input-group">
-                  <label for="stop">Stop</label>
-                  <input type="number" id="stop" placeholder="Stop price" step="0.01" />
-                </div>
-                <div class="input-group">
-                  <label for="exit">Exit</label>
-                  <input type="number" id="exit" placeholder="Average exit price" step="0.01" />
-                </div>
-              </div>
-
-              <div class="filters-row">
-                <div class="input-group">
-                  <label for="rMultiple">R Multiple</label>
-                  <input type="number" id="rMultiple" placeholder="Auto-calculated if empty" step="0.01" />
-                </div>
-                <div class="input-group">
-                  <label for="confidence">Confidence %</label>
-                  <input type="number" id="confidence" placeholder="0–100" min="0" max="100" step="1" />
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label for="setup">Setup</label>
-                <input type="text" id="setup" placeholder="e.g. Opening Drive, VWAP Reclaim" />
-              </div>
-
-              <div class="input-group">
-                <label for="tags">Tags</label>
-                <input
-                  type="text"
-                  id="tags"
-                  placeholder="trend, scalp, news, FOMC… (comma separated)"
-                />
-              </div>
-
-              <div class="input-group">
-                <label for="notes">Post-trade notes</label>
-                <textarea
-                  id="notes"
-                  placeholder="What did you see? What will you repeat or avoid next time?"
-                ></textarea>
-              </div>
-
-              <div class="btn-row">
-                <button type="submit" class="primary">
-                  <span>&#10133;</span>
-                  <span>Log Trade</span>
-                </button>
-                <button type="button" id="resetFormBtn" class="subtle">
-                  <span>&#10226;</span>
-                  <span>Reset</span>
-                </button>
-              </div>
-
-              <div class="chip-group">
-                <span class="chip chip-risk">Risk $ and P&L auto-derived from size, entry, stop & exit</span>
-              </div>
-            </form>
-          </div>
-        </section>
-
-        <!-- Data & Formatting Rules (accordion) -->
-        <section class="panel collapsible" data-accordion="rules">
-          <div class="panel-header">
-            <div class="panel-header-main">
-              <div class="panel-title">Data & Formatting Rules</div>
-              <div class="panel-subtitle">How CSV / JSON is interpreted</div>
-            </div>
-            <div class="accordion-icon">&#9662;</div>
-          </div>
-          <div class="panel-body">
-            <div class="hint-text">
-              <p>
-                CSV import works best with headers like:
-                <strong>date, ticker, direction, size, entry, exit, stop, risk, r, pnl, setup, tags, confidence, session, notes</strong>.
-              </p>
-              <p>
-                Unknown columns are ignored. Numbers can be decimals; notes will be flattened to a single line.
-              </p>
-              <p>
-                JSON import expects an array of trade objects using the same field names. On import, obvious duplicates
-                (same date, ticker, direction, entry &amp; exit) are automatically removed.
-              </p>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <section class="right-column">
-        <!-- KPIs -->
-        <section class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">Key Metrics</div>
-              <div class="panel-subtitle">Real-time pulse of your edge</div>
-            </div>
-            <div class="panel-subtitle">
-              <span id="kpiScopeLabel">Scope: All trades</span>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="kpi-grid">
-              <div class="kpi-card">
-                <div class="kpi-label">Win Rate</div>
-                <div class="kpi-value" id="kpiWinRate">—</div>
-                <div class="kpi-meta-row">
-                  <span class="kpi-tag">Wins / Total</span>
-                  <span class="kpi-delta" id="kpiWinLossBreakdown">
-                    <span class="kpi-dot"></span>
-                    <span>0 / 0</span>
-                  </span>
-                </div>
-              </div>
-
-              <div class="kpi-card">
-                <div class="kpi-label">Net R</div>
-                <div class="kpi-value" id="kpiNetR">—</div>
-                <div class="kpi-meta-row">
-                  <span class="kpi-tag">Sum of R</span>
-                  <span class="kpi-delta" id="kpiAvgR">
-                    <span class="kpi-dot"></span>
-                    <span>Avg R: —</span>
-                  </span>
-                </div>
-              </div>
-
-              <div class="kpi-card">
-                <div class="kpi-label">Best / Worst</div>
-                <div class="kpi-value" id="kpiBestWorst">— / —</div>
-                <div class="kpi-meta-row">
-                  <span class="kpi-tag">R Multiple</span>
-                  <span class="kpi-delta" id="kpiRiskUtilization">
-                    <span class="kpi-dot"></span>
-                    <span>Risk Utl: —</span>
-                  </span>
-                </div>
-              </div>
-
-              <div class="kpi-card">
-                <div class="kpi-label">Total P&L</div>
-                <div class="kpi-value" id="kpiTotalPnl">—</div>
-                <div class="kpi-meta-row">
-                  <span class="kpi-tag">Realized only</span>
-                  <span class="kpi-delta" id="kpiAvgRisk">
-                    <span class="kpi-dot"></span>
-                    <span>Avg Risk: —</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Filters -->
-        <section class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">Filters</div>
-              <div class="panel-subtitle">Slice your journal by context</div>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="filters-row">
-              <div class="input-group">
-                <label for="filterDateFrom">From</label>
-                <input type="date" id="filterDateFrom" />
-              </div>
-              <div class="input-group">
-                <label for="filterDateTo">To</label>
-                <input type="date" id="filterDateTo" />
-              </div>
-            </div>
-
-            <div class="filters-row wide">
-              <div class="input-group">
-                <label for="filterTicker">Ticker</label>
-                <input type="text" id="filterTicker" placeholder="Filter by ticker" />
-              </div>
-              <div class="input-group">
-                <label for="filterSearch">Text search</label>
-                <input
-                  type="text"
-                  id="filterSearch"
-                  placeholder="Setup, tags, notes…"
-                />
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label>Direction</label>
-              <div class="radio-row" id="directionFilters">
-                <div class="radio-pill active" data-value="all">
-                  <span class="radio-pill-dot"></span>
-                  <span>All</span>
-                </div>
-                <div class="radio-pill" data-value="Long">
-                  <span class="radio-pill-dot"></span>
-                  <span>Long</span>
-                </div>
-                <div class="radio-pill" data-value="Short">
-                  <span class="radio-pill-dot"></span>
-                  <span>Short</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="btn-row">
-              <button id="applyFiltersBtn" class="soft-accent">
-                <span>&#128269;</span>
-                <span>Apply Filters</span>
-              </button>
-              <button id="resetFiltersBtn" class="subtle">
-                <span>&#10006;</span>
-                <span>Clear Filters</span>
-              </button>
-            </div>
-
-            <div class="footer-note">
-              <span>Filtered stats drive the KPIs above and table below.</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Trades table -->
-        <section class="panel">
-          <div class="panel-header">
-            <div>
-              <div class="panel-title">Trades</div>
-              <div class="panel-subtitle">
-                <span id="tradeCountLabel">0 trades logged</span>
-              </div>
-            </div>
-            <div class="panel-subtitle">
-              <span>Click headers to sort</span>
-            </div>
-          </div>
-
-          <div class="table-wrapper">
-            <div class="table-toolbar">
-              <div class="table-toolbar-left">
-                <div class="badge">
-                  <span class="badge-dot win"></span>
-                  <span id="badgeWins">0 wins</span>
-                </div>
-                <div class="badge">
-                  <span class="badge-dot loss"></span>
-                  <span id="badgeLosses">0 losses</span>
-                </div>
-                <div class="badge">
-                  <span class="badge-dot"></span>
-                  <span id="badgeFlats">0 breakeven</span>
-                </div>
-              </div>
-              <div class="table-toolbar-right">
-                <span id="badgeCurrentSort">Sort: Date (descending)</span>
-              </div>
-            </div>
-
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th data-sort-key="date">
-                      Date <span class="sort-indicator">▼</span>
-                    </th>
-                    <th data-sort-key="ticker">Ticker</th>
-                    <th data-sort-key="direction">Side</th>
-                    <th data-sort-key="session">Time</th>
-                    <th data-sort-key="rMultiple">R</th>
-                    <th data-sort-key="pnl">P&L $</th>
-                    <th data-sort-key="riskPerTrade">Risk $</th>
-                    <th data-sort-key="size">Size</th>
-                    <th data-sort-key="setup">Setup</th>
-                    <th data-sort-key="tags">Tags</th>
-                    <th data-sort-key="confidence">Conf%</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="tradesTbody">
-                  <!-- rows injected here -->
-                </tbody>
-              </table>
-            </div>
-
-            <div id="emptyState" class="empty-state">
-              <div class="empty-state-title">No trades yet.</div>
-              <div class="empty-state-subtitle">
-                Log your first trade on the left, or import a CSV to hydrate your journal.
-              </div>
-            </div>
-          </div>
-        </section>
-      </section>
-    </main>
-
-    <div class="toast-container" id="toastContainer"></div>
-  </div>
-
-  <script>
-    (function () {
-      const STORAGE_KEY = "myTradingVitalsTrades_v1";
-
-      let trades = [];
-      let filteredTrades = null;
-      let currentSort = { key: "date", direction: "desc" };
-      let activeDirectionFilter = "all";
-
-      const el = (id) => document.getElementById(id);
-
-      const tradeForm = el("tradeForm");
-      const resetFormBtn = el("resetFormBtn");
-
-      const importFileInput = el("importFile");
-      const importCsvBtn = el("importCsvBtn");
-      const exportCsvBtn = el("exportCsvBtn");
-      const exportJsonBtn = el("exportJsonBtn");
-      const clearAllBtn = el("clearAllBtn");
-      const fileNameLabel = el("fileNameLabel");
-
-      const filterDateFrom = el("filterDateFrom");
-      const filterDateTo = el("filterDateTo");
-      const filterTicker = el("filterTicker");
-      const filterSearch = el("filterSearch");
-      const applyFiltersBtn = el("applyFiltersBtn");
-      const resetFiltersBtn = el("resetFiltersBtn");
-      const kpiScopeLabel = el("kpiScopeLabel");
-      const directionFilters = document.getElementById("directionFilters");
-
-      const tradesTbody = el("tradesTbody");
-      const emptyState = el("emptyState");
-      const tradeCountLabel = el("tradeCountLabel");
-      const badgeWins = el("badgeWins");
-      const badgeLosses = el("badgeLosses");
-      const badgeFlats = el("badgeFlats");
-      const badgeCurrentSort = el("badgeCurrentSort");
-
-      const kpiWinRate = el("kpiWinRate");
-      const kpiWinLossBreakdown = el("kpiWinLossBreakdown");
-      const kpiNetR = el("kpiNetR");
-      const kpiAvgR = el("kpiAvgR");
-      const kpiBestWorst = el("kpiBestWorst");
-      const kpiRiskUtilization = el("kpiRiskUtilization");
-      const kpiTotalPnl = el("kpiTotalPnl");
-      const kpiAvgRisk = el("kpiAvgRisk");
-
-      const toastContainer = el("toastContainer");
-
-      function showToast(message, isError = false) {
-        const toast = document.createElement("div");
-        toast.className = "toast" + (isError ? " toast-error" : "");
-        toast.innerHTML = `
-          <span class="toast-dot"></span>
-          <span>${message}</span>
-        `;
-        toastContainer.appendChild(toast);
-        setTimeout(() => {
-          toast.style.opacity = "0";
-          toast.style.transform = "translateY(4px) scale(0.98)";
-          setTimeout(() => toast.remove(), 220);
-        }, 2600);
-      }
-
-      function loadTrades() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return;
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            trades = parsed.map((t) => ({
-              id: t.id || String(Date.now() + Math.random()),
-              date: t.date || "",
-              ticker: t.ticker || "",
-              direction: t.direction || "Long",
-              session: t.session || "",
-              size: t.size != null ? Number(t.size) : null,
-              riskPerTrade: t.riskPerTrade != null ? Number(t.riskPerTrade) : null,
-              entry: t.entry != null ? Number(t.entry) : null,
-              stop: t.stop != null ? Number(t.stop) : null,
-              exit: t.exit != null ? Number(t.exit) : null,
-              rMultiple: t.rMultiple != null ? Number(t.rMultiple) : null,
-              pnl: t.pnl != null ? Number(t.pnl) : null,
-              setup: t.setup || "",
-              tags: t.tags || "",
-              confidence: t.confidence != null ? Number(t.confidence) : null,
-              notes: t.notes || "",
-            }));
-          }
-        } catch (e) {
-          console.error("Failed to load trades", e);
-        }
-      }
-
-      function saveTrades() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
-        } catch (e) {
-          console.error("Failed to save trades", e);
-        }
-      }
-
-      function calculateDerivedFields(trade) {
-        const size = trade.size != null ? Number(trade.size) : null;
-        const entry = trade.entry != null ? Number(trade.entry) : null;
-        const stop = trade.stop != null ? Number(trade.stop) : null;
-        const exit = trade.exit != null ? Number(trade.exit) : null;
-        const direction = trade.direction || "Long";
-
-        let rMultiple = trade.rMultiple != null ? Number(trade.rMultiple) : null;
-        let pnl = trade.pnl != null ? Number(trade.pnl) : null;
-        let riskPerTrade = trade.riskPerTrade != null ? Number(trade.riskPerTrade) : null;
-
-        if (size != null && entry != null && stop != null) {
-          const riskPerUnit = Math.abs(entry - stop);
-          if (riskPerUnit > 0 && size > 0) {
-            riskPerTrade = riskPerUnit * size;
-            const effectiveExit = exit != null ? exit : entry;
-            const rawR =
-              direction === "Short"
-                ? (entry - effectiveExit) / riskPerUnit
-                : (effectiveExit - entry) / riskPerUnit;
-
-            if (!Number.isFinite(rMultiple) || rMultiple === 0) {
-              rMultiple = rawR;
-            }
-            if (!Number.isFinite(pnl)) {
-              pnl = rawR * riskPerTrade;
-            }
-          }
-        }
-
-        if (!Number.isFinite(pnl) && size != null && entry != null && exit != null) {
-          const move =
-            direction === "Short" ? entry - exit : exit - entry;
-          pnl = move * size;
-        }
-
-        if (!Number.isFinite(rMultiple)) rMultiple = null;
-        if (!Number.isFinite(pnl)) pnl = null;
-        if (!Number.isFinite(riskPerTrade)) riskPerTrade = null;
-
-        return { ...trade, rMultiple, pnl, riskPerTrade };
-      }
-
-      function applySort(array) {
-        const sorted = [...array];
-        const { key, direction } = currentSort;
-        sorted.sort((a, b) => {
-          let va = a[key];
-          let vb = b[key];
-
-          if (key === "date") {
-            const da = va ? new Date(va).getTime() : 0;
-            const db = vb ? new Date(vb).getTime() : 0;
-            return direction === "asc" ? da - db : db - da;
-          }
-
-          if (typeof va === "number" && typeof vb === "number") {
-            if (!Number.isFinite(va)) va = -Infinity;
-            if (!Number.isFinite(vb)) vb = -Infinity;
-            return direction === "asc" ? va - vb : vb - va;
-          }
-
-          if (!va && va !== 0) va = "";
-          if (!vb && vb !== 0) vb = "";
-          const sa = String(va).toLowerCase();
-          const sb = String(vb).toLowerCase();
-          if (sa < sb) return direction === "asc" ? -1 : 1;
-          if (sa > sb) return direction === "asc" ? 1 : -1;
-          return 0;
-        });
-        return sorted;
-      }
-
-      function applyFilters() {
-        const from = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
-        const to = filterDateTo.value ? new Date(filterDateTo.value) : null;
-        const ticker = filterTicker.value.trim().toLowerCase();
-        const text = filterSearch.value.trim().toLowerCase();
-
-        let scopeLabel = "Scope: All trades";
-        const pieces = [];
-
-        if (from) pieces.push("from " + filterDateFrom.value);
-        if (to) pieces.push("to " + filterDateTo.value);
-        if (ticker) pieces.push("ticker " + ticker.toUpperCase());
-        if (text) pieces.push("matching text");
-        if (activeDirectionFilter !== "all")
-          pieces.push(activeDirectionFilter.toLowerCase() + "s");
-
-        if (pieces.length) {
-          scopeLabel = "Scope: " + pieces.join(", ");
-        }
-
-        kpiScopeLabel.textContent = scopeLabel;
-
-        filteredTrades = trades.filter((t) => {
-          if (from && (!t.date || new Date(t.date) < from)) return false;
-          if (to && (!t.date || new Date(t.date) > to)) return false;
-          if (ticker && (!t.ticker || t.ticker.toLowerCase() !== ticker))
-            return false;
-
-          if (activeDirectionFilter !== "all") {
-            if (!t.direction || t.direction !== activeDirectionFilter)
-              return false;
-          }
-
-          if (text) {
-            const haystack = [
-              t.setup,
-              t.tags,
-              t.notes,
-              t.session,
-              t.direction,
-              t.ticker,
-            ]
-              .join(" ")
-              .toLowerCase();
-            if (!haystack.includes(text)) return false;
-          }
-          return true;
-        });
-
-        render();
-      }
-
-      function resetFilters() {
-        filterDateFrom.value = "";
-        filterDateTo.value = "";
-        filterTicker.value = "";
-        filterSearch.value = "";
-        activeDirectionFilter = "all";
-
-        Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
-          (pill) => {
-            pill.classList.toggle("active", pill.dataset.value === "all");
-          }
-        );
-
-        kpiScopeLabel.textContent = "Scope: All trades";
-        filteredTrades = null;
-        render();
-      }
-
-      function formatNumber(value, decimals = 2) {
-        if (value == null || isNaN(value)) return "—";
-        return Number(value).toFixed(decimals);
-      }
-
-      function formatCurrency(value) {
-        if (value == null || isNaN(value)) return "—";
-        const sign = value < 0 ? "-" : "";
-        return sign + "$" + Math.abs(value).toFixed(2);
-      }
-
-      function collapseImportAccordion() {
-        const importPanel = document.querySelector('[data-accordion="import"]');
-        if (importPanel) importPanel.classList.remove("open");
-      }
-
-      function render() {
-        const source = filteredTrades && Array.isArray(filteredTrades)
-          ? filteredTrades
-          : trades;
-
-        const withDerived = source.map(calculateDerivedFields);
-        const sorted = applySort(withDerived);
-
-        tradesTbody.innerHTML = "";
-
-        if (!sorted.length) {
-          emptyState.style.display = "block";
-        } else {
-          emptyState.style.display = "none";
-        }
-
-        let wins = 0;
-        let losses = 0;
-        let flats = 0;
-        let totalR = 0;
-        let totalPnl = 0;
-        let totalRisk = 0;
-        let countR = 0;
-
-        let bestR = null;
-        let worstR = null;
-
-        sorted.forEach((t) => {
-          const r = t.rMultiple;
-          const pnl = t.pnl;
-          const risk = t.riskPerTrade;
-
-          if (Number.isFinite(r) && r !== 0) {
-            totalR += r;
-            countR += 1;
-            if (bestR === null || r > bestR) bestR = r;
-            if (worstR === null || r < worstR) worstR = r;
-          }
-
-          if (Number.isFinite(pnl)) {
-            totalPnl += pnl;
-            if (pnl > 0) wins += 1;
-            else if (pnl < 0) losses += 1;
-            else flats += 1;
-          } else if (Number.isFinite(r)) {
-            if (r > 0) wins += 1;
-            else if (r < 0) losses += 1;
-            else flats += 1;
-          }
-
-          if (Number.isFinite(risk) && risk > 0) {
-            totalRisk += risk;
-          }
-
-          const tr = document.createElement("tr");
-
-          const pnlClass =
-            Number.isFinite(pnl) && pnl !== 0
-              ? pnl > 0
-                ? "pnl-positive"
-                : "pnl-negative"
-              : "pnl-flat";
-
-          tr.innerHTML = `
-            <td>${t.date || "—"}</td>
-            <td>${t.ticker || "—"}</td>
-            <td>
-              <span class="pill-direction ${(t.direction || "Long").toLowerCase()}">
-                ${t.direction || "Long"}
-              </span>
-            </td>
-            <td>${t.session || "—"}</td>
-            <td class="${
-              Number.isFinite(r)
-                ? r > 0
-                  ? "pnl-positive"
-                  : r < 0
-                  ? "pnl-negative"
-                  : "pnl-flat"
-                : ""
-            }">${formatNumber(r)}</td>
-            <td class="${pnlClass}">${formatCurrency(pnl)}</td>
-            <td>${formatCurrency(risk)}</td>
-            <td>${t.size != null && t.size !== 0 ? t.size : "—"}</td>
-            <td>${t.setup || "—"}</td>
-            <td>${t.tags || "—"}</td>
-            <td>${
-              t.confidence != null && t.confidence !== ""
-                ? t.confidence + "%"
-                : "—"
-            }</td>
-            <td>${t.notes || "—"}</td>
-            <td>
-              <button data-id="${t.id}" class="subtle btn-edit">Edit</button>
-              <button data-id="${t.id}" class="danger btn-delete">Del</button>
-            </td>
-          `;
-
-          tradesTbody.appendChild(tr);
-        });
-
-        const totalTrades = sorted.length;
-        tradeCountLabel.textContent = totalTrades + " trade" +
-          (totalTrades === 1 ? "" : "s") +
-          (filteredTrades ? " (filtered)" : "");
-
-        badgeWins.textContent = wins + " win" + (wins === 1 ? "" : "s");
-        badgeLosses.textContent = losses + " loss" + (losses === 1 ? "" : "es");
-        badgeFlats.textContent = flats + " breakeven";
-
-        const winRate =
-          totalTrades > 0 ? (wins / totalTrades) * 100 : null;
-        kpiWinRate.textContent =
-          winRate != null ? winRate.toFixed(1) + "%" : "—";
-
-        kpiWinLossBreakdown.innerHTML = `
-          <span class="kpi-dot"></span>
-          <span>${wins} / ${totalTrades}</span>
-        `;
-
-        kpiNetR.textContent = formatNumber(totalR);
-        const avgR = countR > 0 ? totalR / countR : null;
-        kpiAvgR.innerHTML = `
-          <span class="kpi-dot"></span>
-          <span>Avg R: ${formatNumber(avgR)}</span>
-        `;
-
-        kpiBestWorst.textContent =
-          formatNumber(bestR) + " / " + formatNumber(worstR);
-
-        const riskUtil =
-          totalRisk > 0 && totalTrades > 0
-            ? (totalPnl / totalRisk) * 100
-            : null;
-        kpiRiskUtilization.innerHTML = `
-          <span class="kpi-dot"></span>
-          <span>Risk Utl: ${
-            riskUtil != null ? riskUtil.toFixed(0) + "%" : "—"
-          }</span>
-        `;
-
-        kpiTotalPnl.textContent = formatCurrency(totalPnl);
-
-        const avgRisk =
-          totalTrades > 0 && totalRisk > 0
-            ? totalRisk / totalTrades
-            : null;
-        kpiAvgRisk.innerHTML = `
-          <span class="kpi-dot"></span>
-          <span>Avg Risk: ${formatCurrency(avgRisk)}</span>
-        `;
-
-        updateSortBadges();
-
-        tradesTbody.querySelectorAll(".btn-delete").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.dataset.id;
-            if (!id) return;
-            const idx = trades.findIndex((t) => t.id === id);
-            if (idx >= 0) {
-              trades.splice(idx, 1);
-              saveTrades();
-              showToast("Trade deleted");
-              filteredTrades = null;
-              applyFilters();
-            }
-          });
-        });
-
-        tradesTbody.querySelectorAll(".btn-edit").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.dataset.id;
-            const t = trades.find((x) => x.id === id);
-            if (!t) return;
-            populateFormForEdit(t);
-          });
-        });
-      }
-
-      function populateFormForEdit(trade) {
-        tradeForm.dataset.editId = trade.id;
-        el("date").value = trade.date || "";
-        if (el("sessionTime")) el("sessionTime").value = trade.session || "";
-        el("ticker").value = trade.ticker || "";
-        el("direction").value = trade.direction || "Long";
-        el("size").value =
-          trade.size != null && trade.size !== 0 ? trade.size : "";
-        el("entry").value =
-          trade.entry != null && trade.entry !== 0 ? trade.entry : "";
-        el("stop").value =
-          trade.stop != null && trade.stop !== 0 ? trade.stop : "";
-        el("exit").value =
-          trade.exit != null && trade.exit !== 0 ? trade.exit : "";
-        el("rMultiple").value =
-          trade.rMultiple != null && trade.rMultiple !== 0
-            ? trade.rMultiple
-            : "";
-        el("setup").value = trade.setup || "";
-        el("confidence").value =
-          trade.confidence != null && trade.confidence !== ""
-            ? trade.confidence
-            : "";
-        el("tags").value = trade.tags || "";
-        el("notes").value = trade.notes || "";
-        showToast("Edit mode: trade loaded");
-      }
-
-      function clearForm() {
-        tradeForm.reset();
-        delete tradeForm.dataset.editId;
-      }
-
-      function handleFormSubmit(e) {
-        e.preventDefault();
-
-        const date = el("date").value;
-        const ticker = el("ticker").value.trim().toUpperCase();
-        const direction = el("direction").value || "Long";
-        const sessionTimeInput = el("sessionTime");
-        const session = sessionTimeInput && sessionTimeInput.value
-          ? sessionTimeInput.value
-          : "";
-        const sizeRaw = el("size").value;
-        const entryRaw = el("entry").value;
-        const stopRaw = el("stop").value;
-        const exitRaw = el("exit").value;
-        const rRaw = el("rMultiple").value;
-        const setup = el("setup").value.trim();
-        const confRaw = el("confidence").value;
-        const tags = el("tags").value.trim();
-        const notes = el("notes").value.trim();
-
-        if (!date || !ticker) {
-          showToast("Date and ticker required", true);
-          return;
-        }
-
-        const tradeBase = {
-          id: tradeForm.dataset.editId || String(Date.now() + Math.random()),
-          date,
-          ticker,
-          direction,
-          session,
-          size: sizeRaw !== "" ? Number(sizeRaw) : null,
-          riskPerTrade: null,
-          entry: entryRaw !== "" ? Number(entryRaw) : null,
-          stop: stopRaw !== "" ? Number(stopRaw) : null,
-          exit: exitRaw !== "" ? Number(exitRaw) : null,
-          rMultiple: rRaw !== "" ? Number(rRaw) : null,
-          pnl: null,
-          setup,
-          tags,
-          confidence: confRaw !== "" ? Number(confRaw) : null,
-          notes,
-        };
-
-        const prepared = calculateDerivedFields(tradeBase);
-
-        if (tradeForm.dataset.editId) {
-          const idx = trades.findIndex((t) => t.id === tradeBase.id);
-          if (idx >= 0) {
-            trades[idx] = prepared;
-            showToast("Trade updated");
-          }
-        } else {
-          trades.push(prepared);
-          showToast("Trade logged");
-        }
-
-        saveTrades();
-        clearForm();
-        filteredTrades = null;
-        applyFilters();
-        collapseImportAccordion();
-      }
-
-      function parseCsv(text) {
-        const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-        if (!lines.length) return [];
-
-        const header = lines[0]
-          .split(",")
-          .map((h) => h.trim().toLowerCase());
-
-        function getValue(row, keyCandidates) {
-          for (const key of keyCandidates) {
-            const idx = header.indexOf(key);
-            if (idx !== -1 && row[idx] != null && row[idx].trim() !== "") {
-              return row[idx].trim();
-            }
-          }
-          return null;
-        }
-
-        const tradesFromCsv = [];
-
-        for (let i = 1; i < lines.length; i++) {
-          const row = lines[i].split(",").map((c) => c.trim());
-          if (row.length === 0) continue;
-
-          const date = getValue(row, ["date"]);
-          const ticker = getValue(row, ["ticker", "symbol"]);
-          if (!date && !ticker) continue;
-
-          const direction =
-            getValue(row, ["direction", "side"]) || "Long";
-
-          const sizeRaw = getValue(row, ["size", "qty", "quantity"]);
-          const riskRaw = getValue(row, ["risk", "risk_per_trade", "risk$"]);
-          const entryRaw = getValue(row, ["entry", "entry_price"]);
-          const stopRaw = getValue(row, ["stop", "stop_price"]);
-          const exitRaw = getValue(row, ["exit", "exit_price"]);
-          const rRaw = getValue(row, ["r", "r_multiple"]);
-          const pnlRaw = getValue(row, ["pnl", "pnl$", "profit"]);
-
-          const session = getValue(row, ["session", "time"]) || "";
-          const setup = getValue(row, ["setup", "playbook"]);
-          const tags = getValue(row, ["tags", "tag"]);
-          const confRaw = getValue(row, ["confidence", "conf"]);
-          const notes = getValue(row, ["notes", "comment", "comments"]);
-
-          const base = {
-            id: String(Date.now() + Math.random() + i),
-            date: date || "",
-            ticker: ticker ? ticker.toUpperCase() : "",
-            direction,
-            session,
-            size: sizeRaw != null && sizeRaw !== "" ? Number(sizeRaw) : null,
-            riskPerTrade:
-              riskRaw != null && riskRaw !== "" ? Number(riskRaw) : null,
-            entry: entryRaw != null && entryRaw !== "" ? Number(entryRaw) : null,
-            stop: stopRaw != null && stopRaw !== "" ? Number(stopRaw) : null,
-            exit: exitRaw != null && exitRaw !== "" ? Number(exitRaw) : null,
-            rMultiple: rRaw != null && rRaw !== "" ? Number(rRaw) : null,
-            pnl: pnlRaw != null && pnlRaw !== "" ? Number(pnlRaw) : null,
-            setup: setup || "",
-            tags: tags || "",
-            confidence:
-              confRaw != null && confRaw !== "" ? Number(confRaw) : null,
-            notes: notes || "",
-          };
-
-          tradesFromCsv.push(calculateDerivedFields(base));
-        }
-
-        return tradesFromCsv;
-      }
-
-      function exportCsv() {
-        if (!trades.length) {
-          showToast("No trades to export", true);
-          return;
-        }
-
-        const headers = [
-          "date",
-          "ticker",
-          "direction",
-          "session",
-          "size",
-          "risk_per_trade",
-          "entry",
-          "stop",
-          "exit",
-          "r",
-          "pnl",
-          "setup",
-          "tags",
-          "confidence",
-          "notes",
-        ];
-
-        const rows = trades.map((t) => {
-          const dt = calculateDerivedFields(t);
-          return [
-            dt.date || "",
-            dt.ticker || "",
-            dt.direction || "",
-            dt.session || "",
-            dt.size != null ? dt.size : "",
-            dt.riskPerTrade != null ? dt.riskPerTrade : "",
-            dt.entry != null ? dt.entry : "",
-            dt.stop != null ? dt.stop : "",
-            dt.exit != null ? dt.exit : "",
-            dt.rMultiple != null ? dt.rMultiple : "",
-            dt.pnl != null ? dt.pnl : "",
-            dt.setup || "",
-            dt.tags || "",
-            dt.confidence != null ? dt.confidence : "",
-            (dt.notes || "").replace(/\r?\n/g, " "),
-          ];
-        });
-
-        const csvLines = [headers.join(",")].concat(
-          rows.map((r) =>
-            r
-              .map((field) => {
-                if (field == null) return "";
-                const s = String(field);
-                if (/,|"/.test(s)) {
-                  return '"' + s.replace(/"/g, '""') + '"';
-                }
-                return s;
-              })
-              .join(",")
-          )
-        );
-
-        const blob = new Blob([csvLines.join("\n")], {
-          type: "text/csv;charset=utf-8;",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "my_trading_vitals.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast("CSV exported");
-        collapseImportAccordion();
-      }
-
-      function exportJson() {
-        if (!trades.length) {
-          showToast("No trades to export", true);
-          return;
-        }
-
-        const blob = new Blob([JSON.stringify(trades, null, 2)], {
-          type: "application/json;charset=utf-8;",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "my_trading_vitals.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast("JSON exported");
-        collapseImportAccordion();
-      }
-
-      function handleImport() {
-        const file = importFileInput.files && importFileInput.files[0];
-        if (!file) {
-          showToast("Select a file first", true);
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const text = e.target.result;
-          if (file.name.toLowerCase().endsWith(".json")) {
-            try {
-              const parsed = JSON.parse(text);
-              if (!Array.isArray(parsed)) {
-                showToast("JSON must be an array of trades", true);
-                return;
-              }
-              const normalized = parsed.map((t, i) =>
-                calculateDerivedFields({
-                  id:
-                    t.id ||
-                    String(
-                      Date.now() +
-                        Math.random() +
-                        i +
-                        "_json"
-                    ),
-                  date: t.date || "",
-                  ticker: (t.ticker || "").toUpperCase(),
-                  direction: t.direction || "Long",
-                  session: t.session || "",
-                  size: t.size != null ? Number(t.size) : null,
-                  riskPerTrade:
-                    t.riskPerTrade != null
-                      ? Number(t.riskPerTrade)
-                      : null,
-                  entry: t.entry != null ? Number(t.entry) : null,
-                  stop: t.stop != null ? Number(t.stop) : null,
-                  exit: t.exit != null ? Number(t.exit) : null,
-                  rMultiple:
-                    t.rMultiple != null ? Number(t.rMultiple) : null,
-                  pnl: t.pnl != null ? Number(t.pnl) : null,
-                  setup: t.setup || "",
-                  tags: t.tags || "",
-                  confidence:
-                    t.confidence != null ? Number(t.confidence) : null,
-                  notes: t.notes || "",
-                })
-              );
-              trades = trades.concat(normalized);
-              dedupeTrades();
-              saveTrades();
-              filteredTrades = null;
-              applyFilters();
-              showToast("JSON imported");
-              collapseImportAccordion();
-            } catch (err) {
-              console.error(err);
-              showToast("Failed to parse JSON", true);
-            }
-          } else {
-            const imported = parseCsv(text);
-            if (!imported.length) {
-              showToast("No rows detected in CSV", true);
-              return;
-            }
-            trades = trades.concat(imported);
-            dedupeTrades();
-            saveTrades();
-            filteredTrades = null;
-            applyFilters();
-            showToast("CSV imported (" + imported.length + " rows)");
-            collapseImportAccordion();
-          }
-        };
-        reader.onerror = () => {
-          showToast("File read error", true);
-        };
-        reader.readAsText(file);
-      }
-
-      function dedupeTrades() {
-        const map = new Map();
-        trades.forEach((t) => {
-          const key =
-            (t.date || "") +
-            "|" +
-            (t.ticker || "") +
-            "|" +
-            (t.direction || "") +
-            "|" +
-            (t.entry != null ? t.entry : "") +
-            "|" +
-            (t.exit != null ? t.exit : "");
-          if (!map.has(key)) {
-            map.set(key, t);
-          }
-        });
-        trades = Array.from(map.values());
-      }
-
-      function clearAll() {
-        if (
-          !confirm(
-            "This will clear all locally stored trades for MyTradingVitals. This cannot be undone."
-          )
-        ) {
-          return;
-        }
-        trades = [];
-        filteredTrades = null;
-        localStorage.removeItem(STORAGE_KEY);
-        render();
-        showToast("All trades cleared");
-        collapseImportAccordion();
-      }
-
-      function updateSortBadges() {
-        const label =
-          currentSort.key +
-          " (" +
-          (currentSort.direction === "asc" ? "ascending" : "descending") +
-          ")";
-        badgeCurrentSort.textContent = "Sort: " + label;
-
-        const thead = document.querySelector("thead");
-        if (!thead) return;
-
-        thead.querySelectorAll("th").forEach((th) => {
-          const key = th.dataset.sortKey;
-          const indicator = th.querySelector(".sort-indicator");
-          if (!key || !indicator) return;
-          if (key === currentSort.key) {
-            indicator.textContent =
-              currentSort.direction === "asc" ? "▲" : "▼";
-            indicator.style.opacity = "1";
-          } else {
-            indicator.textContent = "";
-            indicator.style.opacity = "0.2";
-          }
-        });
-      }
-
-      function handleSortClick(e) {
-        const th = e.target.closest("th");
-        if (!th) return;
-        const key = th.dataset.sortKey;
-        if (!key) return;
-
-        if (currentSort.key === key) {
-          currentSort.direction =
-            currentSort.direction === "asc" ? "desc" : "asc";
-        } else {
-          currentSort.key = key;
-          currentSort.direction = "desc";
-        }
-        render();
-      }
-
-      function initEvents() {
-        tradeForm.addEventListener("submit", handleFormSubmit);
-        resetFormBtn.addEventListener("click", () => {
-          clearForm();
-          showToast("Form cleared");
-        });
-
-        importFileInput.addEventListener("change", () => {
-          const file = importFileInput.files && importFileInput.files[0];
-          fileNameLabel.textContent = file ? file.name : "";
-        });
-
-        importCsvBtn.addEventListener("click", handleImport);
-        exportCsvBtn.addEventListener("click", exportCsv);
-        exportJsonBtn.addEventListener("click", exportJson);
-        clearAllBtn.addEventListener("click", clearAll);
-
-        applyFiltersBtn.addEventListener("click", applyFilters);
-        resetFiltersBtn.addEventListener("click", resetFilters);
-
-        directionFilters.addEventListener("click", (e) => {
-          const pill = e.target.closest(".radio-pill");
-          if (!pill) return;
-          const value = pill.dataset.value;
-          if (!value) return;
-          activeDirectionFilter = value;
-          Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
-            (p) => p.classList.toggle("active", p === pill)
-          );
-          applyFilters();
-        });
-
-        const thead = document.querySelector("thead");
-        if (thead) {
-          thead.addEventListener("click", handleSortClick);
-        }
-      }
-
-      function initDefaults() {
-        if (el("date") && !el("date").value) {
-          const today = new Date();
-          const iso = today.toISOString().slice(0, 10);
-          el("date").value = iso;
-        }
-        if (el("sessionTime") && !el("sessionTime").value) {
-          const now = new Date();
-          const hh = String(now.getHours()).padStart(2, "0");
-          const mm = String(now.getMinutes()).padStart(2, "0");
-          el("sessionTime").value = hh + ":" + mm;
-        }
-      }
-
-      function initAccordions() {
-        document.querySelectorAll(".panel.collapsible").forEach((panel) => {
-          const header = panel.querySelector(".panel-header");
-          if (!header) return;
-          header.addEventListener("click", (e) => {
-            if (e.target.closest("button")) return;
-            panel.classList.toggle("open");
-          });
-        });
-        // All start collapsed by design for a clean surface.
       }
 
       function init() {
