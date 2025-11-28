@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Trading Vitals v0.3.7</title>
+  <title>My Trading Vitals v0.3.8</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -1095,7 +1095,7 @@
       </div>
       <div class="header-meta">
         <div class="pill">
-          <span>v0.3.7 · Local-Only</span>
+          <span>v0.3.8 · Local-Only</span>
         </div>
       </div>
     </header>
@@ -1547,10 +1547,60 @@
           </div>
 
           <div class="modal-section" id="modalMacdSection">
+            <div class="input-group">
+              <label>Timeframe</label>
+              <div class="radio-row" id="macdTimeframeRow">
+                <div class="radio-pill" data-timeframe="day">
+                  <span class="radio-pill-dot"></span>
+                  <span>1D</span>
+                </div>
+                <div class="radio-pill" data-timeframe="week">
+                  <span class="radio-pill-dot"></span>
+                  <span>1W</span>
+                </div>
+                <div class="radio-pill" data-timeframe="month">
+                  <span class="radio-pill-dot"></span>
+                  <span>1M</span>
+                </div>
+                <div class="radio-pill" data-timeframe="quarter">
+                  <span class="radio-pill-dot"></span>
+                  <span>1Q</span>
+                </div>
+                <div class="radio-pill" data-timeframe="ytd">
+                  <span class="radio-pill-dot"></span>
+                  <span>YTD</span>
+                </div>
+                <div class="radio-pill active" data-timeframe="all">
+                  <span class="radio-pill-dot"></span>
+                  <span>ALL</span>
+                </div>
+              </div>
+            </div>
+
             <div class="modal-chart">
               <canvas id="macdCanvas"></canvas>
             </div>
-            <div class="modal-grid">
+
+            <div class="modal-grid" style="margin-top:6px;">
+              <div>
+                <strong>Current MACD</strong>
+                <span id="modalMacdValue">—</span>
+              </div>
+              <div>
+                <strong>Bias</strong>
+                <span id="modalMacdBias">—</span>
+              </div>
+              <div>
+                <strong>Fast vs Slow</strong>
+                <span id="modalMacdFastSlow">—</span>
+              </div>
+              <div>
+                <strong>Sampled trades</strong>
+                <span id="modalMacdSample">—</span>
+              </div>
+            </div>
+
+            <div class="modal-grid" style="margin-top:6px;">
               <div class="input-group">
                 <label for="macdMin">Y Min</label>
                 <input type="number" id="macdMin" placeholder="auto" />
@@ -1561,7 +1611,8 @@
               </div>
             </div>
             <p class="hint-text" style="margin-top:8px;">
-              Line chart plots fast and slow P&amp;L EMAs over time. Adjust the scale to focus on your operating range.
+              Line chart plots fast and slow P&amp;L EMAs over time for the selected timeframe.
+              Positive MACD with fast EMA above slow and rising is typically bullish; negative and falling is bearish.
             </p>
           </div>
 
@@ -1592,6 +1643,7 @@
       let dotPlotPoints = [];
       let dotplotTooltipEl = null;
       let currentTooltipTradeId = null;
+      let currentMacdTimeframe = "all";
 
       const el = (id) => document.getElementById(id);
 
@@ -1651,6 +1703,7 @@
       const dotplotCanvas = el("dotplotCanvas");
       const macdMinInput = el("macdMin");
       const macdMaxInput = el("macdMax");
+      const macdTimeframeRow = el("macdTimeframeRow");
       dotplotTooltipEl = el("dotplotTooltip");
 
       const modalWinRateVal = el("modalWinRateVal");
@@ -1659,6 +1712,11 @@
       const modalAvgLossVal = el("modalAvgLossVal");
       const modalStdDevVal = el("modalStdDevVal");
       const modalExpectancyVal = el("modalExpectancyVal");
+
+      const modalMacdValue = el("modalMacdValue");
+      const modalMacdBias = el("modalMacdBias");
+      const modalMacdFastSlow = el("modalMacdFastSlow");
+      const modalMacdSample = el("modalMacdSample");
 
       function showToast(message, isError = false) {
         const toast = document.createElement("div");
@@ -1874,18 +1932,48 @@
         return { fast, slow, macd: fast - slow };
       }
 
-      function getMacdSeries(tradesArr) {
-        const chronological = [...tradesArr].filter(t => t.date).sort((a, b) => {
-          const da = new Date(a.date).getTime();
-          const db = new Date(b.date).getTime();
-          return da - db;
-        });
+      function getMacdSeries(tradesArr, timeframe) {
+        let chronological = [...tradesArr]
+          .filter(t => t.date && Number.isFinite(t.pnl))
+          .sort((a, b) => {
+            const da = new Date(a.date).getTime();
+            const db = new Date(b.date).getTime();
+            return da - db;
+          });
 
-        const values = chronological
-          .map(t => (Number.isFinite(t.pnl) ? t.pnl : null))
-          .filter(v => v != null);
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let cutoff = null;
 
-        if (!values.length) return [];
+        switch (timeframe) {
+          case "day":
+            cutoff = new Date(today.getTime() - 1 * msPerDay);
+            break;
+          case "week":
+            cutoff = new Date(today.getTime() - 7 * msPerDay);
+            break;
+          case "month":
+            cutoff = new Date(today.getTime() - 30 * msPerDay);
+            break;
+          case "quarter":
+            cutoff = new Date(today.getTime() - 90 * msPerDay);
+            break;
+          case "ytd":
+            cutoff = new Date(now.getFullYear(), 0, 1);
+            break;
+          case "all":
+          default:
+            cutoff = null;
+        }
+
+        if (cutoff) {
+          chronological = chronological.filter(t => new Date(t.date) >= cutoff);
+        }
+
+        if (!chronological.length) return [];
+
+        const values = chronological.map(t => t.pnl);
 
         const fastPeriod = 5;
         const slowPeriod = 13;
@@ -2793,6 +2881,20 @@
           });
         }
 
+        if (macdTimeframeRow) {
+          macdTimeframeRow.addEventListener("click", (e) => {
+            const pill = e.target.closest(".radio-pill");
+            if (!pill) return;
+            const tf = pill.dataset.timeframe;
+            if (!tf) return;
+            currentMacdTimeframe = tf;
+            Array.from(macdTimeframeRow.querySelectorAll(".radio-pill")).forEach(
+              (p) => p.classList.toggle("active", p === pill)
+            );
+            drawMacdChart();
+          });
+        }
+
         if (dotplotCanvas) {
           dotplotCanvas.addEventListener("mousemove", handleDotplotHover);
           dotplotCanvas.addEventListener("mouseleave", hideDotplotTooltip);
@@ -2856,7 +2958,7 @@
 
       function drawMacdChart() {
         if (!macdCanvas || !lastRenderMetrics) return;
-        const series = getMacdSeries(lastRenderMetrics.trades);
+        const series = getMacdSeries(lastRenderMetrics.trades, currentMacdTimeframe);
         const ctx = macdCanvas.getContext("2d");
         const dpr = window.devicePixelRatio || 1;
         const rect = macdCanvas.getBoundingClientRect();
@@ -2873,7 +2975,11 @@
         if (!series.length) {
           ctx.fillStyle = "#9ca8d9";
           ctx.font = "12px system-ui";
-          ctx.fillText("No MACD data available.", 12, 24);
+          ctx.fillText("No MACD data available for this timeframe.", 12, 24);
+          if (modalMacdValue) modalMacdValue.textContent = "—";
+          if (modalMacdBias) modalMacdBias.textContent = "—";
+          if (modalMacdFastSlow) modalMacdFastSlow.textContent = "—";
+          if (modalMacdSample) modalMacdSample.textContent = "—";
           return;
         }
 
@@ -2930,6 +3036,47 @@
         });
         ctx.stroke();
 
+        const last = series[series.length - 1];
+        const prev = series.length > 1 ? series[series.length - 2] : null;
+        const macd = last.fast - last.slow;
+        const prevMacd = prev ? prev.fast - prev.slow : null;
+        const fastAboveSlow = last.fast > last.slow;
+
+        let bias = "Neutral / Mixed";
+        if (macd > 0 && fastAboveSlow) {
+          if (prevMacd != null && macd >= prevMacd) {
+            bias = "Bullish (MACD positive & rising)";
+          } else {
+            bias = "Bullish, but momentum flattening";
+          }
+        } else if (macd < 0 && !fastAboveSlow) {
+          if (prevMacd != null && macd <= prevMacd) {
+            bias = "Bearish (MACD negative & falling)";
+          } else {
+            bias = "Bearish, but momentum improving";
+          }
+        }
+
+        if (modalMacdValue) modalMacdValue.textContent = formatCurrency(macd);
+        if (modalMacdFastSlow) {
+          modalMacdFastSlow.textContent =
+            formatCurrency(last.fast) + " vs " + formatCurrency(last.slow);
+        }
+        if (modalMacdBias) modalMacdBias.textContent = bias;
+
+        const firstDate = series[0].date ? new Date(series[0].date) : null;
+        const lastDate = last.date ? new Date(last.date) : null;
+        if (firstDate && lastDate && modalMacdSample) {
+          const msPerDay = 24 * 60 * 60 * 1000;
+          const spanDays = Math.max(1, (lastDate - firstDate) / msPerDay);
+          modalMacdSample.textContent =
+            series.length +
+            " pts · ~" +
+            spanDays.toFixed(0) +
+            " day" +
+            (spanDays >= 2 ? "s" : "");
+        }
+
         ctx.fillStyle = "#9ca8d9";
         ctx.font = "10px system-ui";
         ctx.fillText(formatCurrency(maxY), 4, yScale(maxY) + 3);
@@ -2937,8 +3084,73 @@
       }
 
       function openMacdModal() {
+        if (macdTimeframeRow) {
+          Array.from(macdTimeframeRow.querySelectorAll(".radio-pill")).forEach(
+            (p) => p.classList.toggle("active", p.dataset.timeframe === currentMacdTimeframe)
+          );
+        }
         openModalSection("modalMacdSection", "Edge MACD Detail");
         drawMacdChart();
+      }
+
+      function dotplotInferOptionType(trade) {
+        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
+          .join(" ")
+          .toLowerCase();
+        if (text.includes("call")) return "Call";
+        if (text.includes("put")) return "Put";
+        return "—";
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function wireTooltipEditHandlers(trade) {
+        if (!dotplotTooltipEl) return;
+        const editBtn = dotplotTooltipEl.querySelector(".tooltip-edit-btn");
+        const editor = dotplotTooltipEl.querySelector(".tooltip-editor");
+        const textarea = editor ? editor.querySelector("textarea") : null;
+        const saveBtn = editor ? editor.querySelector(".tooltip-save") : null;
+        const cancelBtn = editor ? editor.querySelector(".tooltip-cancel") : null;
+
+        if (editBtn) {
+          editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!editor || !textarea) return;
+            textarea.value = trade.notes || "";
+            editor.style.display = "block";
+          });
+        }
+
+        if (cancelBtn) {
+          cancelBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (editor) editor.style.display = "none";
+          });
+        }
+
+        if (saveBtn && textarea) {
+          saveBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const newNote = textarea.value.trim();
+            const idx = trades.findIndex((t) => t.id === trade.id);
+            if (idx >= 0) {
+              trades[idx].notes = newNote;
+              saveTrades();
+              showToast("Note updated from dot plot");
+              filteredTrades = null;
+              applyFilters();
+              drawDotPlot();
+            }
+          });
+        }
       }
 
       function drawDotPlot() {
@@ -3008,66 +3220,6 @@
         ctx.fillText(formatCurrency(minY), 4, yScale(minY) + 3);
       }
 
-      function inferOptionType(trade) {
-        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
-          .join(" ")
-          .toLowerCase();
-        if (text.includes("call")) return "Call";
-        if (text.includes("put")) return "Put";
-        return "—";
-      }
-
-      function escapeHtml(str) {
-        if (!str) return "";
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-
-      function wireTooltipEditHandlers(trade) {
-        if (!dotplotTooltipEl) return;
-        const editBtn = dotplotTooltipEl.querySelector(".tooltip-edit-btn");
-        const editor = dotplotTooltipEl.querySelector(".tooltip-editor");
-        const textarea = editor ? editor.querySelector("textarea") : null;
-        const saveBtn = editor ? editor.querySelector(".tooltip-save") : null;
-        const cancelBtn = editor ? editor.querySelector(".tooltip-cancel") : null;
-
-        if (editBtn) {
-          editBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (!editor || !textarea) return;
-            textarea.value = trade.notes || "";
-            editor.style.display = "block";
-          });
-        }
-
-        if (cancelBtn) {
-          cancelBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (editor) editor.style.display = "none";
-          });
-        }
-
-        if (saveBtn && textarea) {
-          saveBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const newNote = textarea.value.trim();
-            const idx = trades.findIndex((t) => t.id === trade.id);
-            if (idx >= 0) {
-              trades[idx].notes = newNote;
-              saveTrades();
-              showToast("Note updated from dot plot");
-              filteredTrades = null;
-              applyFilters();
-              drawDotPlot();
-            }
-          });
-        }
-      }
-
       function handleDotplotHover(e) {
         if (!dotPlotPoints.length || !dotplotTooltipEl) {
           hideDotplotTooltip();
@@ -3101,7 +3253,7 @@
             ? Math.abs(trade.entry * trade.size)
             : null;
         const pnlPct = cost && pnl != null ? pnl / cost : null;
-        const optionType = inferOptionType(trade);
+        const optionType = dotplotInferOptionType(trade);
 
         let pnlLine = "P/L: " + formatCurrency(pnl);
         if (pnlPct != null && isFinite(pnlPct)) {
