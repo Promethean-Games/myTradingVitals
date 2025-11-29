@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Trading Vitals v0.3.8</title>
+  <title>My Trading Vitals v0.4.0</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -1095,13 +1095,14 @@
       </div>
       <div class="header-meta">
         <div class="pill">
-          <span>v0.3.8 · Local-Only</span>
+          <span>v0.4.0 · Local-Only</span>
         </div>
       </div>
     </header>
 
     <main class="layout">
       <section class="left-column">
+        <!-- Import / Export (collapsed by default on refresh/open) -->
         <section class="panel collapsible" data-accordion="import">
           <div class="panel-header">
             <div class="panel-header-main">
@@ -1147,6 +1148,7 @@
           </div>
         </section>
 
+        <!-- Quick Add -->
         <section class="panel collapsible" data-accordion="quick-add">
           <div class="panel-header">
             <div class="panel-header-main">
@@ -1240,12 +1242,15 @@
               </div>
 
               <div class="chip-group">
-                <span class="chip chip-risk">P&L is auto-derived from size, open &amp; close.</span>
+                <span class="chip chip-risk">
+                  P&L is auto-derived from size, open &amp; close. Risk per trade kept internal.
+                </span>
               </div>
             </form>
           </div>
         </section>
 
+        <!-- Data rules -->
         <section class="panel collapsible" data-accordion="rules">
           <div class="panel-header">
             <div class="panel-header-main">
@@ -1264,8 +1269,8 @@
               </p>
               <p>
                 If your CSV includes brokerage-style fields like <strong>Action, Symbol, Quantity, Price</strong>
-                the app will try to pair <em>Buy to Open</em> with <em>Sell to Close</em> legs into a single
-                trade line with open and close prices.
+                the app will pair <em>Buy to Open</em> and <em>Sell to Close</em> into a single position-level trade
+                (even if you scale in/out at different prices). You’ll see one aggregated open/close line per round trip.
               </p>
               <p>
                 JSON import expects an array of trade or transaction objects using similar field names.
@@ -1277,6 +1282,7 @@
       </section>
 
       <section class="right-column">
+        <!-- KPIs + APY -->
         <section class="panel collapsible open" data-accordion="kpis">
           <div class="panel-header">
             <div>
@@ -1328,14 +1334,14 @@
                 </div>
               </div>
 
-              <div class="kpi-card" id="kpiPnlCard">
+              <div class="kpi-card clickable" id="kpiPnlCard">
                 <div class="kpi-label">P&amp;L Panel</div>
                 <div class="kpi-value" id="kpiPnlPrimary">—</div>
                 <div class="kpi-meta-row">
                   <span class="kpi-tag" id="kpiPnlTag">Realized only</span>
                   <span class="kpi-delta">
                     <span class="kpi-dot"></span>
-                    <span>Per-trade expectancy</span>
+                    <span>P&amp;L detail on tap</span>
                   </span>
                 </div>
               </div>
@@ -1357,6 +1363,7 @@
           </div>
         </section>
 
+        <!-- Filters (now includes Call/Put toggle) -->
         <section class="panel collapsible open" data-accordion="filters">
           <div class="panel-header">
             <div class="panel-header-main">
@@ -1412,6 +1419,24 @@
               </div>
             </div>
 
+            <div class="input-group">
+              <label>Option Type</label>
+              <div class="radio-row" id="optionFilters">
+                <div class="radio-pill active" data-value="all">
+                  <span class="radio-pill-dot"></span>
+                  <span>All</span>
+                </div>
+                <div class="radio-pill" data-value="call">
+                  <span class="radio-pill-dot"></span>
+                  <span>Calls</span>
+                </div>
+                <div class="radio-pill" data-value="put">
+                  <span class="radio-pill-dot"></span>
+                  <span>Puts</span>
+                </div>
+              </div>
+            </div>
+
             <div class="btn-row">
               <button id="applyFiltersBtn" class="soft-accent">
                 <span>&#128269;</span>
@@ -1429,6 +1454,7 @@
           </div>
         </section>
 
+        <!-- Trades -->
         <section class="panel collapsible open" data-accordion="trades">
           <div class="panel-header">
             <div class="panel-header-main">
@@ -1476,6 +1502,7 @@
                       </th>
                       <th data-sort-key="ticker">Ticker</th>
                       <th data-sort-key="direction">Side</th>
+                      <th data-sort-key="optionType">Type</th>
                       <th data-sort-key="session">Time</th>
                       <th data-sort-key="entry">Open</th>
                       <th data-sort-key="exit">Close</th>
@@ -1506,6 +1533,7 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Detail modal -->
     <div class="modal-backdrop" id="detailModal">
       <div class="modal-dialog">
         <div class="modal-header">
@@ -1513,6 +1541,7 @@
           <button class="modal-close" id="modalCloseBtn">&times;</button>
         </div>
         <div class="modal-body">
+          <!-- Win rate detail -->
           <div class="modal-section" id="modalWinSection">
             <p>Win rate breakdown and distribution for the current filtered scope.</p>
             <div class="modal-grid">
@@ -1546,6 +1575,7 @@
             </p>
           </div>
 
+          <!-- MACD detail -->
           <div class="modal-section" id="modalMacdSection">
             <div class="input-group">
               <label>Timeframe</label>
@@ -1616,6 +1646,7 @@
             </p>
           </div>
 
+          <!-- Dot plot detail -->
           <div class="modal-section" id="modalDotPlotSection">
             <div class="modal-chart">
               <canvas id="dotplotCanvas"></canvas>
@@ -1624,6 +1655,49 @@
             <p class="hint-text" style="margin-top:8px;">
               Dot plot shows each trade’s P&amp;L, colored by winner vs loser for the current filtered scope.
               Hover a dot to see the trade details, and click the pencil icon to add or update a note directly.
+            </p>
+          </div>
+
+          <!-- P&L detail -->
+          <div class="modal-section" id="modalPnlSection">
+            <p>Profit &amp; loss detail for the current filtered scope.</p>
+            <div class="modal-grid">
+              <div>
+                <strong>Total P&amp;L</strong>
+                <span id="modalPnlTotal">—</span>
+              </div>
+              <div>
+                <strong>Avg per trade</strong>
+                <span id="modalPnlAvg">—</span>
+              </div>
+              <div>
+                <strong>Gross wins</strong>
+                <span id="modalPnlGrossWin">—</span>
+              </div>
+              <div>
+                <strong>Gross losses</strong>
+                <span id="modalPnlGrossLoss">—</span>
+              </div>
+              <div>
+                <strong>Best trade</strong>
+                <span id="modalPnlBest">—</span>
+              </div>
+              <div>
+                <strong>Worst trade</strong>
+                <span id="modalPnlWorst">—</span>
+              </div>
+              <div>
+                <strong>Max drawdown</strong>
+                <span id="modalPnlMaxDD">—</span>
+              </div>
+              <div>
+                <strong>Trades counted</strong>
+                <span id="modalPnlCount">—</span>
+              </div>
+            </div>
+            <p class="hint-text" style="margin-top:8px;">
+              Max drawdown is computed from the cumulative P&amp;L curve in date order for this filtered set.
+              It approximates the largest peak-to-trough equity dip you experienced.
             </p>
           </div>
         </div>
@@ -1639,6 +1713,7 @@
       let filteredTrades = null;
       let currentSort = { key: "date", direction: "desc" };
       let activeDirectionFilter = "all";
+      let activeOptionFilter = "all";
       let lastRenderMetrics = null;
       let dotPlotPoints = [];
       let dotplotTooltipEl = null;
@@ -1665,6 +1740,7 @@
       const resetFiltersBtn = el("resetFiltersBtn");
       const kpiScopeLabel = el("kpiScopeLabel");
       const directionFilters = document.getElementById("directionFilters");
+      const optionFilters = document.getElementById("optionFilters");
 
       const tradesTbody = el("tradesTbody");
       const emptyState = el("emptyState");
@@ -1691,6 +1767,7 @@
       const kpiWinCard = el("kpiWinCard");
       const kpiMacdCard = el("kpiMacdCard");
       const kpiBestCard = el("kpiBestCard");
+      const kpiPnlCard = el("kpiPnlCard");
 
       const detailModal = el("detailModal");
       const modalTitle = el("modalTitle");
@@ -1698,6 +1775,7 @@
       const modalWinSection = el("modalWinSection");
       const modalMacdSection = el("modalMacdSection");
       const modalDotPlotSection = el("modalDotPlotSection");
+      const modalPnlSection = el("modalPnlSection");
 
       const macdCanvas = el("macdCanvas");
       const dotplotCanvas = el("dotplotCanvas");
@@ -1717,6 +1795,15 @@
       const modalMacdBias = el("modalMacdBias");
       const modalMacdFastSlow = el("modalMacdFastSlow");
       const modalMacdSample = el("modalMacdSample");
+
+      const modalPnlTotal = el("modalPnlTotal");
+      const modalPnlAvg = el("modalPnlAvg");
+      const modalPnlGrossWin = el("modalPnlGrossWin");
+      const modalPnlGrossLoss = el("modalPnlGrossLoss");
+      const modalPnlBest = el("modalPnlBest");
+      const modalPnlWorst = el("modalPnlWorst");
+      const modalPnlMaxDD = el("modalPnlMaxDD");
+      const modalPnlCount = el("modalPnlCount");
 
       function showToast(message, isError = false) {
         const toast = document.createElement("div");
@@ -1786,6 +1873,15 @@
         return { ...trade, pnl };
       }
 
+      function inferOptionType(trade) {
+        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
+          .join(" ")
+          .toLowerCase();
+        if (text.includes("call")) return "Call";
+        if (text.includes("put")) return "Put";
+        return "—";
+      }
+
       function applySort(array) {
         const sorted = [...array];
         const { key, direction } = currentSort;
@@ -1822,8 +1918,7 @@
         const ticker = filterTicker.value.trim().toLowerCase();
         const text = filterSearch.value.trim().toLowerCase();
 
-        let scopeLabel = "Scope: All trades";
-        const pieces = [];
+        let pieces = [];
 
         if (from) pieces.push("from " + filterDateFrom.value);
         if (to) pieces.push("to " + filterDateTo.value);
@@ -1831,22 +1926,25 @@
         if (text) pieces.push("matching text");
         if (activeDirectionFilter !== "all")
           pieces.push(activeDirectionFilter.toLowerCase() + "s");
+        if (activeOptionFilter === "call") pieces.push("calls only");
+        if (activeOptionFilter === "put") pieces.push("puts only");
 
-        if (pieces.length) {
-          scopeLabel = "Scope: " + pieces.join(", ");
-        }
-
-        kpiScopeLabel.textContent = scopeLabel;
+        kpiScopeLabel.textContent =
+          "Scope: " + (pieces.length ? pieces.join(", ") : "All trades");
 
         filteredTrades = trades.filter((t) => {
           if (from && (!t.date || new Date(t.date) < from)) return false;
           if (to && (!t.date || new Date(t.date) > to)) return false;
-          if (ticker && (!t.ticker || t.ticker.toLowerCase() !== ticker))
-            return false;
+          if (ticker && (!t.ticker || t.ticker.toLowerCase() !== ticker)) return false;
 
           if (activeDirectionFilter !== "all") {
-            if (!t.direction || t.direction !== activeDirectionFilter)
-              return false;
+            if (!t.direction || t.direction !== activeDirectionFilter) return false;
+          }
+
+          if (activeOptionFilter !== "all") {
+            const optType = inferOptionType(t);
+            if (activeOptionFilter === "call" && optType !== "Call") return false;
+            if (activeOptionFilter === "put" && optType !== "Put") return false;
           }
 
           if (text) {
@@ -1874,11 +1972,13 @@
         filterTicker.value = "";
         filterSearch.value = "";
         activeDirectionFilter = "all";
+        activeOptionFilter = "all";
 
         Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
-          (pill) => {
-            pill.classList.toggle("active", pill.dataset.value === "all");
-          }
+          (pill) => pill.classList.toggle("active", pill.dataset.value === "all")
+        );
+        Array.from(optionFilters.querySelectorAll(".radio-pill")).forEach(
+          (pill) => pill.classList.toggle("active", pill.dataset.value === "all")
         );
 
         kpiScopeLabel.textContent = "Scope: All trades";
@@ -1903,15 +2003,13 @@
       }
 
       function computeMacdFromTrades(tradesArr) {
-        const chronological = [...tradesArr].filter(t => t.date).sort((a, b) => {
-          const da = new Date(a.date).getTime();
-          const db = new Date(b.date).getTime();
-          return da - db;
-        });
+        const chronological = [...tradesArr]
+          .filter((t) => t.date)
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
 
         const values = chronological
-          .map(t => Number.isFinite(t.pnl) ? t.pnl : null)
-          .filter(v => v != null);
+          .map((t) => Number.isFinite(t.pnl) ? t.pnl : null)
+          .filter((v) => v != null);
 
         if (!values.length) return { fast: null, slow: null, macd: null };
 
@@ -1934,12 +2032,8 @@
 
       function getMacdSeries(tradesArr, timeframe) {
         let chronological = [...tradesArr]
-          .filter(t => t.date && Number.isFinite(t.pnl))
-          .sort((a, b) => {
-            const da = new Date(a.date).getTime();
-            const db = new Date(b.date).getTime();
-            return da - db;
-          });
+          .filter((t) => t.date && Number.isFinite(t.pnl))
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
 
         const now = new Date();
         const msPerDay = 24 * 60 * 60 * 1000;
@@ -1968,12 +2062,12 @@
         }
 
         if (cutoff) {
-          chronological = chronological.filter(t => new Date(t.date) >= cutoff);
+          chronological = chronological.filter((t) => new Date(t.date) >= cutoff);
         }
 
         if (!chronological.length) return [];
 
-        const values = chronological.map(t => t.pnl);
+        const values = chronological.map((t) => t.pnl);
 
         const fastPeriod = 5;
         const slowPeriod = 13;
@@ -2006,8 +2100,8 @@
       function computeApyMetrics(tradesArr, capitalBasis) {
         const basis = capitalBasis && capitalBasis > 0 ? capitalBasis : 10000;
         const withDates = tradesArr
-          .filter(t => t.date && Number.isFinite(t.pnl))
-          .map(t => ({ date: new Date(t.date), pnl: t.pnl }));
+          .filter((t) => t.date && Number.isFinite(t.pnl))
+          .map((t) => ({ date: new Date(t.date), pnl: t.pnl }));
 
         if (!withDates.length) {
           return {};
@@ -2015,13 +2109,14 @@
 
         const today = new Date();
         const msPerDay = 24 * 60 * 60 * 1000;
-        const minDate = withDates.reduce((min, t) =>
-          t.date < min ? t.date : min, withDates[0].date
+        const minDate = withDates.reduce(
+          (min, t) => (t.date < min ? t.date : min),
+          withDates[0].date
         );
 
         function sumPnlSince(cutoff) {
           return withDates
-            .filter(t => t.date >= cutoff)
+            .filter((t) => t.date >= cutoff)
             .reduce((acc, t) => acc + t.pnl, 0);
         }
 
@@ -2055,8 +2150,8 @@
 
       function computeWinStats(tradesArr) {
         const pnls = tradesArr
-          .map(t => t.pnl)
-          .filter(v => Number.isFinite(v));
+          .map((t) => t.pnl)
+          .filter((v) => Number.isFinite(v));
 
         const n = pnls.length;
         if (!n) {
@@ -2078,7 +2173,7 @@
         let winSum = 0;
         let lossSum = 0;
 
-        pnls.forEach(p => {
+        pnls.forEach((p) => {
           if (p > 0) {
             wins += 1;
             winSum += p;
@@ -2116,12 +2211,79 @@
         };
       }
 
+      function computePnlDetail(tradesArr) {
+        const chronological = [...tradesArr]
+          .filter((t) => t.date)
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const pnls = chronological
+          .map((t) => t.pnl)
+          .filter((v) => Number.isFinite(v));
+
+        const n = pnls.length;
+        if (!n) {
+          return {
+            total: null,
+            avg: null,
+            grossWin: null,
+            grossLoss: null,
+            best: null,
+            worst: null,
+            maxDD: null,
+            count: 0,
+          };
+        }
+
+        let total = 0;
+        let grossWin = 0;
+        let grossLoss = 0;
+        let best = pnls[0];
+        let worst = pnls[0];
+
+        pnls.forEach((p) => {
+          total += p;
+          if (p > 0) grossWin += p;
+          else if (p < 0) grossLoss += p;
+          if (p > best) best = p;
+          if (p < worst) worst = p;
+        });
+
+        const avg = total / n;
+
+        // Max drawdown from cumulative P&L
+        let cum = 0;
+        let peak = 0;
+        let maxDD = 0;
+        chronological.forEach((t) => {
+          if (!Number.isFinite(t.pnl)) return;
+          cum += t.pnl;
+          if (cum > peak) peak = cum;
+          const dd = peak - cum;
+          if (dd > maxDD) maxDD = dd;
+        });
+
+        return {
+          total,
+          avg,
+          grossWin,
+          grossLoss,
+          best,
+          worst,
+          maxDD,
+          count: n,
+        };
+      }
+
       function render() {
         const source = filteredTrades && Array.isArray(filteredTrades)
           ? filteredTrades
           : trades;
 
-        const withDerived = source.map(calculateDerivedFields);
+        const withDerived = source.map((t) => {
+          const d = calculateDerivedFields(t);
+          d.optionType = inferOptionType(d);
+          return d;
+        });
         const sorted = applySort(withDerived);
 
         tradesTbody.innerHTML = "";
@@ -2167,6 +2329,7 @@
                 ${t.direction || "Long"}
               </span>
             </td>
+            <td>${t.optionType || "—"}</td>
             <td>${t.session || "—"}</td>
             <td>${t.entry != null && t.entry !== 0 ? t.entry : "—"}</td>
             <td>${t.exit != null && t.exit !== 0 ? t.exit : "—"}</td>
@@ -2190,7 +2353,9 @@
         });
 
         const totalTrades = sorted.length;
-        tradeCountLabel.textContent = totalTrades + " trade" +
+        tradeCountLabel.textContent =
+          totalTrades +
+          " trade" +
           (totalTrades === 1 ? "" : "s") +
           (filteredTrades ? " (filtered)" : "");
 
@@ -2199,7 +2364,8 @@
         const worstPnl = countPnl ? Math.min(...pnls) : null;
 
         badgeWins.textContent = wins + " win" + (wins === 1 ? "" : "s");
-        badgeLosses.textContent = losses + " loss" + (losses === 1 ? "" : "es");
+        badgeLosses.textContent =
+          losses + " loss" + (losses === 1 ? "" : "es");
         badgeFlats.textContent = flats + " breakeven";
 
         const winRate =
@@ -2213,10 +2379,15 @@
         `;
 
         const macdResult = computeMacdFromTrades(withDerived);
-        kpiMacd.textContent = macdResult.macd != null ? formatCurrency(macdResult.macd) : "—";
+        kpiMacd.textContent =
+          macdResult.macd != null ? formatCurrency(macdResult.macd) : "—";
         kpiMacdDetail.innerHTML = `
           <span class="kpi-dot"></span>
-          <span>Fast: ${macdResult.fast != null ? formatCurrency(macdResult.fast) : "—"} · Slow: ${macdResult.slow != null ? formatCurrency(macdResult.slow) : "—"}</span>
+          <span>Fast: ${
+            macdResult.fast != null ? formatCurrency(macdResult.fast) : "—"
+          } · Slow: ${
+          macdResult.slow != null ? formatCurrency(macdResult.slow) : "—"
+        }</span>
         `;
 
         kpiBestWorst.textContent =
@@ -2278,9 +2449,10 @@
 
       function updateApyHud(tradesArr) {
         if (!apyChips) return;
-        const basisVal = capitalBasisInput && capitalBasisInput.value
-          ? Number(capitalBasisInput.value)
-          : null;
+        const basisVal =
+          capitalBasisInput && capitalBasisInput.value
+            ? Number(capitalBasisInput.value)
+            : null;
         const basis = basisVal && basisVal > 0 ? basisVal : 10000;
         const metrics = computeApyMetrics(tradesArr, basis);
         const mapping = [
@@ -2294,7 +2466,12 @@
         ];
         let html = "";
         mapping.forEach(([label, val]) => {
-          html += '<span class="chip">' + label + " " + formatPercent(val) + "</span>";
+          html +=
+            '<span class="chip">' +
+            label +
+            " " +
+            formatPercent(val) +
+            "</span>";
         });
         apyChips.innerHTML = html;
       }
@@ -2333,9 +2510,10 @@
         const ticker = el("ticker").value.trim().toUpperCase();
         const direction = el("direction").value || "Long";
         const sessionTimeInput = el("sessionTime");
-        const session = sessionTimeInput && sessionTimeInput.value
-          ? sessionTimeInput.value
-          : "";
+        const session =
+          sessionTimeInput && sessionTimeInput.value
+            ? sessionTimeInput.value
+            : "";
         const sizeRaw = el("size").value;
         const entryRaw = el("entry").value;
         const exitRaw = el("exit").value;
@@ -2409,7 +2587,8 @@
         const hasPrice = header.indexOf("price") !== -1;
 
         if (hasAction && hasSymbol && hasQuantity && hasPrice) {
-          const openLotsBySymbol = new Map();
+          // Position-based pairing for BTO/STC with scaling in/out
+          const positions = new Map(); // symbol -> {qty, avgEntry, totalRealized, totalClosedQty, openDate, notes}
           const pairedTrades = [];
 
           function parseMoney(x) {
@@ -2441,75 +2620,155 @@
 
             const key = symbol;
 
-            if (action.includes("buy to open")) {
-              if (!openLotsBySymbol.has(key)) openLotsBySymbol.set(key, []);
-              openLotsBySymbol.get(key).push({
-                remaining: Math.abs(qty),
-                price,
-                date,
+            // Ensure a position object exists
+            if (!positions.has(key)) {
+              positions.set(key, {
+                qty: 0,
+                avgEntry: 0,
+                totalRealized: 0,
+                totalClosedQty: 0,
+                openDate: null,
+                notes: [],
               });
-            } else if (action.includes("sell to close")) {
-              let remainingToClose = Math.abs(qty);
-              const lots = openLotsBySymbol.get(key) || [];
-              while (remainingToClose > 0 && lots.length) {
-                const lot = lots[0];
-                const take = Math.min(remainingToClose, lot.remaining);
-                const entryPrice = lot.price;
-                const exitPrice = price;
-                const size = take;
-                const direction = "Long";
-                const move = exitPrice - entryPrice;
-                const pnl = move * size;
+            }
+            const pos = positions.get(key);
 
-                pairedTrades.push({
-                  id: String(Date.now() + Math.random() + i + "_" + size),
+            if (action.includes("buy to open")) {
+              const buyQty = Math.abs(qty);
+              const curQty = pos.qty;
+              const curAvg = pos.avgEntry;
+              const newQty = curQty + buyQty;
+              const newAvg =
+                newQty > 0 ? (curAvg * curQty + price * buyQty) / newQty : price;
+
+              pos.qty = newQty;
+              pos.avgEntry = newAvg;
+              if (!pos.openDate) pos.openDate = date || "";
+              if (desc) pos.notes.push(desc);
+              positions.set(key, pos);
+            } else if (action.includes("sell to close")) {
+              if (desc) pos.notes.push(desc);
+              let sellQty = Math.abs(qty);
+
+              if (pos.qty <= 0) {
+                // No position tracked; treat as standalone trade
+                const standalone = {
+                  id: String(Date.now() + Math.random() + i + "_standalone"),
                   date: date || "",
                   ticker: symbol,
-                  direction,
+                  direction: "Long",
                   session: "",
-                  size,
-                  entry: entryPrice,
-                  exit: exitPrice,
-                  pnl,
+                  size: sellQty,
+                  entry: price,
+                  exit: price,
+                  pnl: amount != null ? amount : null,
                   setup: "",
-                  tags: "BTO/STC",
+                  tags: "STC(unmatched)",
                   confidence: null,
                   notes: desc,
-                });
-
-                lot.remaining -= take;
-                remainingToClose -= take;
-                if (lot.remaining <= 0) {
-                  lots.shift();
-                }
+                };
+                pairedTrades.push(calculateDerivedFields(standalone));
+                continue;
               }
-              openLotsBySymbol.set(key, lots);
+
+              const closable = Math.min(sellQty, pos.qty);
+              if (closable <= 0) continue;
+
+              const realized = (price - pos.avgEntry) * closable;
+              pos.totalRealized += realized;
+              pos.totalClosedQty += closable;
+              pos.qty -= closable;
+
+              if (pos.qty === 0 && pos.totalClosedQty > 0) {
+                const size = pos.totalClosedQty;
+                const avgEntry = pos.avgEntry;
+                const pnl = pos.totalRealized;
+                const effectiveExit =
+                  size > 0 ? avgEntry + pnl / size : price;
+
+                const notesJoined = pos.notes.join(" | ");
+
+                pairedTrades.push(
+                  calculateDerivedFields({
+                    id: String(Date.now() + Math.random() + i + "_roundtrip"),
+                    date: date || "",
+                    ticker: symbol,
+                    direction: "Long",
+                    session: "",
+                    size,
+                    entry: avgEntry,
+                    exit: effectiveExit,
+                    pnl,
+                    setup: "",
+                    tags: "BTO/STC",
+                    confidence: null,
+                    notes: notesJoined,
+                  })
+                );
+
+                // Reset position for next cycle on same symbol
+                positions.set(key, {
+                  qty: 0,
+                  avgEntry: 0,
+                  totalRealized: 0,
+                  totalClosedQty: 0,
+                  openDate: null,
+                  notes: [],
+                });
+              } else {
+                positions.set(key, pos);
+              }
             } else {
+              // Non BTO/STC actions - treat as individual trades
               const direction = amount != null && amount > 0 ? "Short" : "Long";
               const size = Math.abs(qty);
-              const entryPrice = price;
-              const exitPrice = null;
-              pairedTrades.push({
+              const standalone = {
                 id: String(Date.now() + Math.random() + i + "_single"),
                 date: date || "",
                 ticker: symbol,
                 direction,
                 session: "",
                 size,
-                entry: entryPrice,
-                exit: exitPrice,
+                entry: price,
+                exit: null,
                 pnl: amount,
                 setup: "",
                 tags: actionRaw,
                 confidence: null,
                 notes: desc,
-              });
+              };
+              pairedTrades.push(calculateDerivedFields(standalone));
             }
           }
 
-          return pairedTrades.map(calculateDerivedFields);
+          // Any positions still open become open trades with no exit yet
+          positions.forEach((pos, symbol) => {
+            if (pos.qty > 0) {
+              const notesJoined = pos.notes.join(" | ");
+              pairedTrades.push(
+                calculateDerivedFields({
+                  id: String(Date.now() + Math.random() + "_open"),
+                  date: pos.openDate || "",
+                  ticker: symbol,
+                  direction: "Long",
+                  session: "",
+                  size: pos.qty,
+                  entry: pos.avgEntry,
+                  exit: null,
+                  pnl: null,
+                  setup: "",
+                  tags: "BTO(open)",
+                  confidence: null,
+                  notes: notesJoined,
+                })
+              );
+            }
+          });
+
+          return pairedTrades;
         }
 
+        // Generic CSV (non-brokerage)
         const tradesFromCsv = [];
 
         for (let i = 1; i < lines.length; i++) {
@@ -2669,10 +2928,7 @@
                   id:
                     t.id ||
                     String(
-                      Date.now() +
-                        Math.random() +
-                        i +
-                        "_json"
+                      Date.now() + Math.random() + i + "_json"
                     ),
                   date: t.date || "",
                   ticker: (t.ticker || "").toUpperCase(),
@@ -2799,6 +3055,425 @@
         render();
       }
 
+      function openModalSection(sectionId, title) {
+        if (!detailModal) return;
+        modalTitle.textContent = title || "Details";
+        [modalWinSection, modalMacdSection, modalDotPlotSection, modalPnlSection].forEach(
+          (sec) => {
+            if (!sec) return;
+            sec.classList.remove("active");
+          }
+        );
+        const section = el(sectionId);
+        if (section) section.classList.add("active");
+        detailModal.style.display = "flex";
+      }
+
+      function closeModal() {
+        if (detailModal) detailModal.style.display = "none";
+        hideDotplotTooltip();
+      }
+
+      function openWinModal() {
+        if (!lastRenderMetrics) return;
+        const stats = computeWinStats(lastRenderMetrics.trades);
+        modalWinRateVal.textContent =
+          stats.winRate != null ? (stats.winRate * 100).toFixed(1) + "%" : "—";
+        modalTradeCountVal.textContent =
+          stats.total != null ? stats.total : "—";
+        modalAvgWinVal.textContent = formatCurrency(stats.avgWin);
+        modalAvgLossVal.textContent = formatCurrency(stats.avgLoss);
+        modalStdDevVal.textContent = formatCurrency(stats.stdDev);
+        modalExpectancyVal.textContent = formatCurrency(stats.expectancy);
+        openModalSection("modalWinSection", "Win Rate Details");
+      }
+
+      function drawMacdChart() {
+        if (!macdCanvas || !lastRenderMetrics) return;
+        const series = getMacdSeries(
+          lastRenderMetrics.trades,
+          currentMacdTimeframe
+        );
+        const ctx = macdCanvas.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+        const rect = macdCanvas.getBoundingClientRect();
+        const width = rect.width || 400;
+        const height = rect.height || 220;
+        macdCanvas.width = width * dpr;
+        macdCanvas.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#020617";
+        ctx.fillRect(0, 0, width, height);
+
+        if (!series.length) {
+          ctx.fillStyle = "#9ca8d9";
+          ctx.font = "12px system-ui";
+          ctx.fillText("No MACD data available for this timeframe.", 12, 24);
+          if (modalMacdValue) modalMacdValue.textContent = "—";
+          if (modalMacdBias) modalMacdBias.textContent = "—";
+          if (modalMacdFastSlow) modalMacdFastSlow.textContent = "—";
+          if (modalMacdSample) modalMacdSample.textContent = "—";
+          return;
+        }
+
+        let minY = Math.min(...series.map((s) => Math.min(s.fast, s.slow)));
+        let maxY = Math.max(...series.map((s) => Math.max(s.fast, s.slow)));
+        if (macdMinInput && macdMinInput.value !== "") {
+          const userMin = Number(macdMinInput.value);
+          if (isFinite(userMin)) minY = userMin;
+        }
+        if (macdMaxInput && macdMaxInput.value !== "") {
+          const userMax = Number(macdMaxInput.value);
+          if (isFinite(userMax)) maxY = userMax;
+        }
+        if (minY === maxY) {
+          minY -= 1;
+          maxY += 1;
+        }
+
+        const padding = { left: 40, right: 12, top: 12, bottom: 26 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+
+        function yScale(val) {
+          return (
+            padding.top +
+            plotHeight * (1 - (val - minY) / (maxY - minY))
+          );
+        }
+
+        ctx.strokeStyle = "#1f2937";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const zeroY = yScale(0);
+        ctx.moveTo(padding.left, zeroY);
+        ctx.lineTo(width - padding.right, zeroY);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#4ba3ff";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        series.forEach((pt, idx) => {
+          const x =
+            padding.left +
+            (plotWidth * idx) / Math.max(1, series.length - 1);
+          const y = yScale(pt.fast);
+          if (idx === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        ctx.strokeStyle = "#26d981";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        series.forEach((pt, idx) => {
+          const x =
+            padding.left +
+            (plotWidth * idx) / Math.max(1, series.length - 1);
+          const y = yScale(pt.slow);
+          if (idx === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        const last = series[series.length - 1];
+        const prev = series.length > 1 ? series[series.length - 2] : null;
+        const macd = last.fast - last.slow;
+        const prevMacd = prev ? prev.fast - prev.slow : null;
+        const fastAboveSlow = last.fast > last.slow;
+
+        let bias = "Neutral / Mixed";
+        if (macd > 0 && fastAboveSlow) {
+          if (prevMacd != null && macd >= prevMacd) {
+            bias = "Bullish (MACD positive & rising)";
+          } else {
+            bias = "Bullish, but momentum flattening";
+          }
+        } else if (macd < 0 && !fastAboveSlow) {
+          if (prevMacd != null && macd <= prevMacd) {
+            bias = "Bearish (MACD negative & falling)";
+          } else {
+            bias = "Bearish, but momentum improving";
+          }
+        }
+
+        if (modalMacdValue) modalMacdValue.textContent = formatCurrency(macd);
+        if (modalMacdFastSlow) {
+          modalMacdFastSlow.textContent =
+            formatCurrency(last.fast) + " vs " + formatCurrency(last.slow);
+        }
+        if (modalMacdBias) modalMacdBias.textContent = bias;
+
+        const firstDate = series[0].date ? new Date(series[0].date) : null;
+        const lastDate = last.date ? new Date(last.date) : null;
+        if (firstDate && lastDate && modalMacdSample) {
+          const msPerDay = 24 * 60 * 60 * 1000;
+          const spanDays = Math.max(1, (lastDate - firstDate) / msPerDay);
+          modalMacdSample.textContent =
+            series.length +
+            " pts · ~" +
+            spanDays.toFixed(0) +
+            " day" +
+            (spanDays >= 2 ? "s" : "");
+        }
+
+        ctx.fillStyle = "#9ca8d9";
+        ctx.font = "10px system-ui";
+        ctx.fillText(formatCurrency(maxY), 4, yScale(maxY) + 3);
+        ctx.fillText(formatCurrency(minY), 4, yScale(minY) + 3);
+      }
+
+      function openMacdModal() {
+        if (macdTimeframeRow) {
+          Array.from(macdTimeframeRow.querySelectorAll(".radio-pill")).forEach(
+            (p) =>
+              p.classList.toggle(
+                "active",
+                p.dataset.timeframe === currentMacdTimeframe
+              )
+          );
+        }
+        openModalSection("modalMacdSection", "Edge MACD Detail");
+        drawMacdChart();
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function wireTooltipEditHandlers(trade) {
+        if (!dotplotTooltipEl) return;
+        const editBtn = dotplotTooltipEl.querySelector(".tooltip-edit-btn");
+        const editor = dotplotTooltipEl.querySelector(".tooltip-editor");
+        const textarea = editor ? editor.querySelector("textarea") : null;
+        const saveBtn = editor ? editor.querySelector(".tooltip-save") : null;
+        const cancelBtn = editor ? editor.querySelector(".tooltip-cancel") : null;
+
+        if (editBtn) {
+          editBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (!editor || !textarea) return;
+            textarea.value = trade.notes || "";
+            editor.style.display = "block";
+          });
+        }
+
+        if (cancelBtn) {
+          cancelBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (editor) editor.style.display = "none";
+          });
+        }
+
+        if (saveBtn && textarea) {
+          saveBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const newNote = textarea.value.trim();
+            const idx = trades.findIndex((t) => t.id === trade.id);
+            if (idx >= 0) {
+              trades[idx].notes = newNote;
+              saveTrades();
+              showToast("Note updated from dot plot");
+              filteredTrades = null;
+              applyFilters();
+              drawDotPlot();
+            }
+          });
+        }
+      }
+
+      function drawDotPlot() {
+        if (!dotplotCanvas || !lastRenderMetrics) return;
+        const tradesArr = lastRenderMetrics.trades.filter((t) =>
+          Number.isFinite(t.pnl)
+        );
+        const ctx = dotplotCanvas.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+        const rect = dotplotCanvas.getBoundingClientRect();
+        const width = rect.width || 400;
+        const height = rect.height || 220;
+        dotplotCanvas.width = width * dpr;
+        dotplotCanvas.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#020617";
+        ctx.fillRect(0, 0, width, height);
+
+        dotPlotPoints = [];
+        hideDotplotTooltip();
+
+        if (!tradesArr.length) {
+          ctx.fillStyle = "#9ca8d9";
+          ctx.font = "12px system-ui";
+          ctx.fillText("No P&L data available.", 12, 24);
+          return;
+        }
+
+        let minY = Math.min(...tradesArr.map((t) => t.pnl));
+        let maxY = Math.max(...tradesArr.map((t) => t.pnl));
+        if (minY === maxY) {
+          minY -= 1;
+          maxY += 1;
+        }
+
+        const padding = { left: 40, right: 12, top: 12, bottom: 26 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+
+        function yScale(val) {
+          return (
+            padding.top +
+            plotHeight * (1 - (val - minY) / (maxY - minY))
+          );
+        }
+
+        ctx.strokeStyle = "#1f2937";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const zeroY = yScale(0);
+        ctx.moveTo(padding.left, zeroY);
+        ctx.lineTo(width - padding.right, zeroY);
+        ctx.stroke();
+
+        tradesArr.forEach((t, idx) => {
+          const x =
+            padding.left +
+            (plotWidth * idx) / Math.max(1, tradesArr.length - 1);
+          const y = yScale(t.pnl);
+          ctx.beginPath();
+          if (t.pnl > 0) ctx.fillStyle = "#26d981";
+          else if (t.pnl < 0) ctx.fillStyle = "#ff4b6a";
+          else ctx.fillStyle = "#9ca8d9";
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+          dotPlotPoints.push({ x, y, trade: t });
+        });
+
+        ctx.fillStyle = "#9ca8d9";
+        ctx.font = "10px system-ui";
+        ctx.fillText(formatCurrency(maxY), 4, yScale(maxY) + 3);
+        ctx.fillText(formatCurrency(minY), 4, yScale(minY) + 3);
+      }
+
+      function handleDotplotHover(e) {
+        if (!dotPlotPoints.length || !dotplotTooltipEl) {
+          hideDotplotTooltip();
+          return;
+        }
+        const rect = dotplotCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const radius = 6;
+        let closest = null;
+        let minDist = Infinity;
+        dotPlotPoints.forEach((pt) => {
+          const dx = x - pt.x;
+          const dy = y - pt.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < radius && dist < minDist) {
+            minDist = dist;
+            closest = pt;
+          }
+        });
+        if (!closest) {
+          hideDotplotTooltip();
+          return;
+        }
+
+        const trade = closest.trade;
+        currentTooltipTradeId = trade.id;
+        const pnl = trade.pnl;
+        const cost =
+          trade.entry != null && trade.size != null
+            ? Math.abs(trade.entry * trade.size)
+            : null;
+        const pnlPct = cost && pnl != null ? pnl / cost : null;
+        const optionType = inferOptionType(trade);
+
+        let pnlLine = "P/L: " + formatCurrency(pnl);
+        if (pnlPct != null && isFinite(pnlPct)) {
+          pnlLine += " (" + (pnlPct * 100).toFixed(1) + "% of cost)";
+        }
+
+        const notesDisplay =
+          trade.notes && trade.notes.trim().length
+            ? '<div class="tooltip-note">Note: ' +
+              escapeHtml(trade.notes) +
+              "</div>"
+            : "";
+
+        dotplotTooltipEl.innerHTML =
+          '<div class="tooltip-header">' +
+          "<div><strong>" +
+          (trade.ticker || "—") +
+          "</strong> · " +
+          optionType +
+          "</div>" +
+          '<button class="tooltip-edit-btn" title="Edit note">✎</button>' +
+          "</div>" +
+          "<div>" +
+          (trade.date || "—") +
+          " · " +
+          (trade.direction || "") +
+          "</div>" +
+          "<div>" +
+          pnlLine +
+          "</div>" +
+          notesDisplay +
+          '<div class="tooltip-editor" style="display:none;">' +
+          '<textarea placeholder="Add or update note…"></textarea>' +
+          '<div class="tooltip-editor-actions">' +
+          '<button class="subtle tooltip-cancel">Cancel</button>' +
+          '<button class="soft-accent tooltip-save">Save</button>' +
+          "</div>" +
+          "</div>";
+
+        wireTooltipEditHandlers(trade);
+
+        const tooltipWidth = dotplotTooltipEl.offsetWidth || 160;
+        const tooltipHeight = dotplotTooltipEl.offsetHeight || 60;
+        let left = x + 10;
+        let top = y + 10;
+        if (left + tooltipWidth > rect.width) left = x - tooltipWidth - 10;
+        if (top + tooltipHeight > rect.height) top = y - tooltipHeight - 10;
+        dotplotTooltipEl.style.left = left + "px";
+        dotplotTooltipEl.style.top = top + "px";
+        dotplotTooltipEl.style.display = "block";
+      }
+
+      function hideDotplotTooltip() {
+        if (dotplotTooltipEl) dotplotTooltipEl.style.display = "none";
+      }
+
+      function openDotPlotModal() {
+        openModalSection("modalDotPlotSection", "Best / Worst Dot Plot");
+        drawDotPlot();
+      }
+
+      function openPnlModal() {
+        if (!lastRenderMetrics) return;
+        const detail = computePnlDetail(lastRenderMetrics.trades);
+        modalPnlTotal.textContent = formatCurrency(detail.total);
+        modalPnlAvg.textContent = formatCurrency(detail.avg);
+        modalPnlGrossWin.textContent = formatCurrency(detail.grossWin);
+        modalPnlGrossLoss.textContent = formatCurrency(detail.grossLoss);
+        modalPnlBest.textContent = formatCurrency(detail.best);
+        modalPnlWorst.textContent = formatCurrency(detail.worst);
+        modalPnlMaxDD.textContent = formatCurrency(detail.maxDD);
+        modalPnlCount.textContent =
+          detail.count != null ? detail.count : "—";
+        openModalSection("modalPnlSection", "P&L Detail");
+      }
+
       function initEvents() {
         tradeForm.addEventListener("submit", handleFormSubmit);
         resetFormBtn.addEventListener("click", () => {
@@ -2831,6 +3506,18 @@
           applyFilters();
         });
 
+        optionFilters.addEventListener("click", (e) => {
+          const pill = e.target.closest(".radio-pill");
+          if (!pill) return;
+          const value = pill.dataset.value;
+          if (!value) return;
+          activeOptionFilter = value;
+          Array.from(optionFilters.querySelectorAll(".radio-pill")).forEach(
+            (p) => p.classList.toggle("active", p === pill)
+          );
+          applyFilters();
+        });
+
         const thead = document.querySelector("thead");
         if (thead) {
           thead.addEventListener("click", handleSortClick);
@@ -2852,6 +3539,9 @@
         }
         if (kpiBestCard) {
           kpiBestCard.addEventListener("click", openDotPlotModal);
+        }
+        if (kpiPnlCard) {
+          kpiPnlCard.addEventListener("click", openPnlModal);
         }
 
         if (modalCloseBtn) {
@@ -2924,383 +3614,9 @@
             panel.classList.toggle("open");
           });
         });
-      }
-
-      function openModalSection(sectionId, title) {
-        if (!detailModal) return;
-        modalTitle.textContent = title || "Details";
-        [modalWinSection, modalMacdSection, modalDotPlotSection].forEach(sec => {
-          if (!sec) return;
-          sec.classList.remove("active");
-        });
-        const section = el(sectionId);
-        if (section) section.classList.add("active");
-        detailModal.style.display = "flex";
-      }
-
-      function closeModal() {
-        if (detailModal) detailModal.style.display = "none";
-        hideDotplotTooltip();
-      }
-
-      function openWinModal() {
-        if (!lastRenderMetrics) return;
-        const stats = computeWinStats(lastRenderMetrics.trades);
-        modalWinRateVal.textContent =
-          stats.winRate != null ? (stats.winRate * 100).toFixed(1) + "%" : "—";
-        modalTradeCountVal.textContent = stats.total != null ? stats.total : "—";
-        modalAvgWinVal.textContent = formatCurrency(stats.avgWin);
-        modalAvgLossVal.textContent = formatCurrency(stats.avgLoss);
-        modalStdDevVal.textContent = formatCurrency(stats.stdDev);
-        modalExpectancyVal.textContent = formatCurrency(stats.expectancy);
-        openModalSection("modalWinSection", "Win Rate Details");
-      }
-
-      function drawMacdChart() {
-        if (!macdCanvas || !lastRenderMetrics) return;
-        const series = getMacdSeries(lastRenderMetrics.trades, currentMacdTimeframe);
-        const ctx = macdCanvas.getContext("2d");
-        const dpr = window.devicePixelRatio || 1;
-        const rect = macdCanvas.getBoundingClientRect();
-        const width = rect.width || 400;
-        const height = rect.height || 220;
-        macdCanvas.width = width * dpr;
-        macdCanvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "#020617";
-        ctx.fillRect(0, 0, width, height);
-
-        if (!series.length) {
-          ctx.fillStyle = "#9ca8d9";
-          ctx.font = "12px system-ui";
-          ctx.fillText("No MACD data available for this timeframe.", 12, 24);
-          if (modalMacdValue) modalMacdValue.textContent = "—";
-          if (modalMacdBias) modalMacdBias.textContent = "—";
-          if (modalMacdFastSlow) modalMacdFastSlow.textContent = "—";
-          if (modalMacdSample) modalMacdSample.textContent = "—";
-          return;
-        }
-
-        let minY = Math.min(...series.map(s => Math.min(s.fast, s.slow)));
-        let maxY = Math.max(...series.map(s => Math.max(s.fast, s.slow)));
-        if (macdMinInput && macdMinInput.value !== "") {
-          const userMin = Number(macdMinInput.value);
-          if (isFinite(userMin)) minY = userMin;
-        }
-        if (macdMaxInput && macdMaxInput.value !== "") {
-          const userMax = Number(macdMaxInput.value);
-          if (isFinite(userMax)) maxY = userMax;
-        }
-        if (minY === maxY) {
-          minY -= 1;
-          maxY += 1;
-        }
-
-        const padding = { left: 40, right: 12, top: 12, bottom: 26 };
-        const plotWidth = width - padding.left - padding.right;
-        const plotHeight = height - padding.top - padding.bottom;
-
-        function yScale(val) {
-          return padding.top + plotHeight * (1 - (val - minY) / (maxY - minY));
-        }
-
-        ctx.strokeStyle = "#1f2937";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        const zeroY = yScale(0);
-        ctx.moveTo(padding.left, zeroY);
-        ctx.lineTo(width - padding.right, zeroY);
-        ctx.stroke();
-
-        ctx.strokeStyle = "#4ba3ff";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        series.forEach((pt, idx) => {
-          const x = padding.left + (plotWidth * idx) / Math.max(1, series.length - 1);
-          const y = yScale(pt.fast);
-          if (idx === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        ctx.strokeStyle = "#26d981";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        series.forEach((pt, idx) => {
-          const x = padding.left + (plotWidth * idx) / Math.max(1, series.length - 1);
-          const y = yScale(pt.slow);
-          if (idx === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        const last = series[series.length - 1];
-        const prev = series.length > 1 ? series[series.length - 2] : null;
-        const macd = last.fast - last.slow;
-        const prevMacd = prev ? prev.fast - prev.slow : null;
-        const fastAboveSlow = last.fast > last.slow;
-
-        let bias = "Neutral / Mixed";
-        if (macd > 0 && fastAboveSlow) {
-          if (prevMacd != null && macd >= prevMacd) {
-            bias = "Bullish (MACD positive & rising)";
-          } else {
-            bias = "Bullish, but momentum flattening";
-          }
-        } else if (macd < 0 && !fastAboveSlow) {
-          if (prevMacd != null && macd <= prevMacd) {
-            bias = "Bearish (MACD negative & falling)";
-          } else {
-            bias = "Bearish, but momentum improving";
-          }
-        }
-
-        if (modalMacdValue) modalMacdValue.textContent = formatCurrency(macd);
-        if (modalMacdFastSlow) {
-          modalMacdFastSlow.textContent =
-            formatCurrency(last.fast) + " vs " + formatCurrency(last.slow);
-        }
-        if (modalMacdBias) modalMacdBias.textContent = bias;
-
-        const firstDate = series[0].date ? new Date(series[0].date) : null;
-        const lastDate = last.date ? new Date(last.date) : null;
-        if (firstDate && lastDate && modalMacdSample) {
-          const msPerDay = 24 * 60 * 60 * 1000;
-          const spanDays = Math.max(1, (lastDate - firstDate) / msPerDay);
-          modalMacdSample.textContent =
-            series.length +
-            " pts · ~" +
-            spanDays.toFixed(0) +
-            " day" +
-            (spanDays >= 2 ? "s" : "");
-        }
-
-        ctx.fillStyle = "#9ca8d9";
-        ctx.font = "10px system-ui";
-        ctx.fillText(formatCurrency(maxY), 4, yScale(maxY) + 3);
-        ctx.fillText(formatCurrency(minY), 4, yScale(minY) + 3);
-      }
-
-      function openMacdModal() {
-        if (macdTimeframeRow) {
-          Array.from(macdTimeframeRow.querySelectorAll(".radio-pill")).forEach(
-            (p) => p.classList.toggle("active", p.dataset.timeframe === currentMacdTimeframe)
-          );
-        }
-        openModalSection("modalMacdSection", "Edge MACD Detail");
-        drawMacdChart();
-      }
-
-      function dotplotInferOptionType(trade) {
-        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
-          .join(" ")
-          .toLowerCase();
-        if (text.includes("call")) return "Call";
-        if (text.includes("put")) return "Put";
-        return "—";
-      }
-
-      function escapeHtml(str) {
-        if (!str) return "";
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-
-      function wireTooltipEditHandlers(trade) {
-        if (!dotplotTooltipEl) return;
-        const editBtn = dotplotTooltipEl.querySelector(".tooltip-edit-btn");
-        const editor = dotplotTooltipEl.querySelector(".tooltip-editor");
-        const textarea = editor ? editor.querySelector("textarea") : null;
-        const saveBtn = editor ? editor.querySelector(".tooltip-save") : null;
-        const cancelBtn = editor ? editor.querySelector(".tooltip-cancel") : null;
-
-        if (editBtn) {
-          editBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (!editor || !textarea) return;
-            textarea.value = trade.notes || "";
-            editor.style.display = "block";
-          });
-        }
-
-        if (cancelBtn) {
-          cancelBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (editor) editor.style.display = "none";
-          });
-        }
-
-        if (saveBtn && textarea) {
-          saveBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const newNote = textarea.value.trim();
-            const idx = trades.findIndex((t) => t.id === trade.id);
-            if (idx >= 0) {
-              trades[idx].notes = newNote;
-              saveTrades();
-              showToast("Note updated from dot plot");
-              filteredTrades = null;
-              applyFilters();
-              drawDotPlot();
-            }
-          });
-        }
-      }
-
-      function drawDotPlot() {
-        if (!dotplotCanvas || !lastRenderMetrics) return;
-        const tradesArr = lastRenderMetrics.trades.filter(t => Number.isFinite(t.pnl));
-        const ctx = dotplotCanvas.getContext("2d");
-        const dpr = window.devicePixelRatio || 1;
-        const rect = dotplotCanvas.getBoundingClientRect();
-        const width = rect.width || 400;
-        const height = rect.height || 220;
-        dotplotCanvas.width = width * dpr;
-        dotplotCanvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "#020617";
-        ctx.fillRect(0, 0, width, height);
-
-        dotPlotPoints = [];
-        hideDotplotTooltip();
-
-        if (!tradesArr.length) {
-          ctx.fillStyle = "#9ca8d9";
-          ctx.font = "12px system-ui";
-          ctx.fillText("No P&L data available.", 12, 24);
-          return;
-        }
-
-        let minY = Math.min(...tradesArr.map(t => t.pnl));
-        let maxY = Math.max(...tradesArr.map(t => t.pnl));
-        if (minY === maxY) {
-          minY -= 1;
-          maxY += 1;
-        }
-
-        const padding = { left: 40, right: 12, top: 12, bottom: 26 };
-        const plotWidth = width - padding.left - padding.right;
-        const plotHeight = height - padding.top - padding.bottom;
-
-        function yScale(val) {
-          return padding.top + plotHeight * (1 - (val - minY) / (maxY - minY));
-        }
-
-        ctx.strokeStyle = "#1f2937";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        const zeroY = yScale(0);
-        ctx.moveTo(padding.left, zeroY);
-        ctx.lineTo(width - padding.right, zeroY);
-        ctx.stroke();
-
-        tradesArr.forEach((t, idx) => {
-          const x = padding.left + (plotWidth * idx) / Math.max(1, tradesArr.length - 1);
-          const y = yScale(t.pnl);
-          ctx.beginPath();
-          if (t.pnl > 0) ctx.fillStyle = "#26d981";
-          else if (t.pnl < 0) ctx.fillStyle = "#ff4b6a";
-          else ctx.fillStyle = "#9ca8d9";
-          ctx.arc(x, y, 3, 0, Math.PI * 2);
-          ctx.fill();
-          dotPlotPoints.push({ x, y, trade: t });
-        });
-
-        ctx.fillStyle = "#9ca8d9";
-        ctx.font = "10px system-ui";
-        ctx.fillText(formatCurrency(maxY), 4, yScale(maxY) + 3);
-        ctx.fillText(formatCurrency(minY), 4, yScale(minY) + 3);
-      }
-
-      function handleDotplotHover(e) {
-        if (!dotPlotPoints.length || !dotplotTooltipEl) {
-          hideDotplotTooltip();
-          return;
-        }
-        const rect = dotplotCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const radius = 6;
-        let closest = null;
-        let minDist = Infinity;
-        dotPlotPoints.forEach(pt => {
-          const dx = x - pt.x;
-          const dy = y - pt.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < radius && dist < minDist) {
-            minDist = dist;
-            closest = pt;
-          }
-        });
-        if (!closest) {
-          hideDotplotTooltip();
-          return;
-        }
-
-        const trade = closest.trade;
-        currentTooltipTradeId = trade.id;
-        const pnl = trade.pnl;
-        const cost =
-          trade.entry != null && trade.size != null
-            ? Math.abs(trade.entry * trade.size)
-            : null;
-        const pnlPct = cost && pnl != null ? pnl / cost : null;
-        const optionType = dotplotInferOptionType(trade);
-
-        let pnlLine = "P/L: " + formatCurrency(pnl);
-        if (pnlPct != null && isFinite(pnlPct)) {
-          pnlLine += " (" + (pnlPct * 100).toFixed(1) + "% of cost)";
-        }
-
-        const notesDisplay =
-          trade.notes && trade.notes.trim().length
-            ? '<div class="tooltip-note">Note: ' + escapeHtml(trade.notes) + "</div>"
-            : "";
-
-        dotplotTooltipEl.innerHTML =
-          '<div class="tooltip-header">' +
-            "<div><strong>" + (trade.ticker || "—") + "</strong> · " + optionType + "</div>" +
-            '<button class="tooltip-edit-btn" title="Edit note">✎</button>' +
-          "</div>" +
-          "<div>" + (trade.date || "—") + " · " + (trade.direction || "") + "</div>" +
-          "<div>" + pnlLine + "</div>" +
-          notesDisplay +
-          '<div class="tooltip-editor" style="display:none;">' +
-            '<textarea placeholder="Add or update note…"></textarea>' +
-            '<div class="tooltip-editor-actions">' +
-              '<button class="subtle tooltip-cancel">Cancel</button>' +
-              '<button class="soft-accent tooltip-save">Save</button>' +
-            "</div>" +
-          "</div>";
-
-        wireTooltipEditHandlers(trade);
-
-        const tooltipWidth = dotplotTooltipEl.offsetWidth || 160;
-        const tooltipHeight = dotplotTooltipEl.offsetHeight || 60;
-        let left = x + 10;
-        let top = y + 10;
-        if (left + tooltipWidth > rect.width) left = x - tooltipWidth - 10;
-        if (top + tooltipHeight > rect.height) top = y - tooltipHeight - 10;
-        dotplotTooltipEl.style.left = left + "px";
-        dotplotTooltipEl.style.top = top + "px";
-        dotplotTooltipEl.style.display = "block";
-      }
-
-      function hideDotplotTooltip() {
-        if (dotplotTooltipEl) dotplotTooltipEl.style.display = "none";
-      }
-
-      function openDotPlotModal() {
-        openModalSection("modalDotPlotSection", "Best / Worst Dot Plot");
-        drawDotPlot();
+        // Import panel closed by default for a streamlined surface
+        const importPanel = document.querySelector('[data-accordion="import"]');
+        if (importPanel) importPanel.classList.remove("open");
       }
 
       function init() {
