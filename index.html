@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Trading Vitals v0.3.9</title>
+  <title>My Trading Vitals v0.3.8</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -1095,7 +1095,7 @@
       </div>
       <div class="header-meta">
         <div class="pill">
-          <span>v0.3.9 · Local-Only</span>
+          <span>v0.3.8 · Local-Only</span>
         </div>
       </div>
     </header>
@@ -1476,7 +1476,6 @@
                       </th>
                       <th data-sort-key="ticker">Ticker</th>
                       <th data-sort-key="direction">Side</th>
-                      <th data-sort-key="optionType">Type</th>
                       <th data-sort-key="session">Time</th>
                       <th data-sort-key="entry">Open</th>
                       <th data-sort-key="exit">Close</th>
@@ -1785,15 +1784,6 @@
         if (!Number.isFinite(pnl)) pnl = null;
 
         return { ...trade, pnl };
-      }
-
-      function inferOptionType(trade) {
-        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
-          .join(" ")
-          .toLowerCase();
-        if (text.includes("call")) return "Call";
-        if (text.includes("put")) return "Put";
-        return "—";
       }
 
       function applySort(array) {
@@ -2131,11 +2121,7 @@
           ? filteredTrades
           : trades;
 
-        const withDerived = source.map(t => {
-          const d = calculateDerivedFields(t);
-          d.optionType = inferOptionType(d);
-          return d;
-        });
+        const withDerived = source.map(calculateDerivedFields);
         const sorted = applySort(withDerived);
 
         tradesTbody.innerHTML = "";
@@ -2181,7 +2167,6 @@
                 ${t.direction || "Long"}
               </span>
             </td>
-            <td>${t.optionType || "—"}</td>
             <td>${t.session || "—"}</td>
             <td>${t.entry != null && t.entry !== 0 ? t.entry : "—"}</td>
             <td>${t.exit != null && t.exit !== 0 ? t.exit : "—"}</td>
@@ -2814,11 +2799,131 @@
         render();
       }
 
-      function updatePnlCard() {
-        if (!lastRenderMetrics) return;
-        const { totalPnl, avgPnl } = lastRenderMetrics;
-        kpiPnlPrimary.textContent = formatCurrency(totalPnl);
-        kpiPnlTag.textContent = "Avg per trade: " + formatCurrency(avgPnl);
+      function initEvents() {
+        tradeForm.addEventListener("submit", handleFormSubmit);
+        resetFormBtn.addEventListener("click", () => {
+          clearForm();
+          showToast("Form cleared");
+        });
+
+        importFileInput.addEventListener("change", () => {
+          const file = importFileInput.files && importFileInput.files[0];
+          fileNameLabel.textContent = file ? file.name : "";
+        });
+
+        importCsvBtn.addEventListener("click", handleImport);
+        exportCsvBtn.addEventListener("click", exportCsv);
+        exportJsonBtn.addEventListener("click", exportJson);
+        clearAllBtn.addEventListener("click", clearAll);
+
+        applyFiltersBtn.addEventListener("click", applyFilters);
+        resetFiltersBtn.addEventListener("click", resetFilters);
+
+        directionFilters.addEventListener("click", (e) => {
+          const pill = e.target.closest(".radio-pill");
+          if (!pill) return;
+          const value = pill.dataset.value;
+          if (!value) return;
+          activeDirectionFilter = value;
+          Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
+            (p) => p.classList.toggle("active", p === pill)
+          );
+          applyFilters();
+        });
+
+        const thead = document.querySelector("thead");
+        if (thead) {
+          thead.addEventListener("click", handleSortClick);
+        }
+
+        if (capitalBasisInput) {
+          capitalBasisInput.addEventListener("change", () => {
+            if (lastRenderMetrics) {
+              updateApyHud(lastRenderMetrics.trades);
+            }
+          });
+        }
+
+        if (kpiWinCard) {
+          kpiWinCard.addEventListener("click", openWinModal);
+        }
+        if (kpiMacdCard) {
+          kpiMacdCard.addEventListener("click", openMacdModal);
+        }
+        if (kpiBestCard) {
+          kpiBestCard.addEventListener("click", openDotPlotModal);
+        }
+
+        if (modalCloseBtn) {
+          modalCloseBtn.addEventListener("click", closeModal);
+        }
+        if (detailModal) {
+          detailModal.addEventListener("click", (e) => {
+            if (e.target === detailModal) {
+              closeModal();
+            }
+          });
+        }
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeModal();
+        });
+
+        if (macdMinInput) {
+          macdMinInput.addEventListener("change", () => {
+            if (!lastRenderMetrics) return;
+            drawMacdChart();
+          });
+        }
+        if (macdMaxInput) {
+          macdMaxInput.addEventListener("change", () => {
+            if (!lastRenderMetrics) return;
+            drawMacdChart();
+          });
+        }
+
+        if (macdTimeframeRow) {
+          macdTimeframeRow.addEventListener("click", (e) => {
+            const pill = e.target.closest(".radio-pill");
+            if (!pill) return;
+            const tf = pill.dataset.timeframe;
+            if (!tf) return;
+            currentMacdTimeframe = tf;
+            Array.from(macdTimeframeRow.querySelectorAll(".radio-pill")).forEach(
+              (p) => p.classList.toggle("active", p === pill)
+            );
+            drawMacdChart();
+          });
+        }
+
+        if (dotplotCanvas) {
+          dotplotCanvas.addEventListener("mousemove", handleDotplotHover);
+          dotplotCanvas.addEventListener("mouseleave", hideDotplotTooltip);
+        }
+      }
+
+      function initDefaults() {
+        if (el("date") && !el("date").value) {
+          const today = new Date();
+          const iso = today.toISOString().slice(0, 10);
+          el("date").value = iso;
+        }
+        if (el("sessionTime") && !el("sessionTime").value) {
+          const now = new Date();
+          const hh = String(now.getHours()).padStart(2, "0");
+          const mm = String(now.getMinutes()).padStart(2, "0");
+          el("sessionTime").value = hh + ":" + mm;
+        }
+      }
+
+      function initAccordions() {
+        document.querySelectorAll(".panel.collapsible").forEach((panel) => {
+          const toggle = panel.querySelector(".accordion-toggle");
+          if (!toggle) return;
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            panel.classList.toggle("open");
+          });
+        });
       }
 
       function openModalSection(sectionId, title) {
@@ -2988,6 +3093,15 @@
         drawMacdChart();
       }
 
+      function dotplotInferOptionType(trade) {
+        const text = [trade.ticker, trade.tags, trade.setup, trade.notes]
+          .join(" ")
+          .toLowerCase();
+        if (text.includes("call")) return "Call";
+        if (text.includes("put")) return "Put";
+        return "—";
+      }
+
       function escapeHtml(str) {
         if (!str) return "";
         return String(str)
@@ -3139,7 +3253,7 @@
             ? Math.abs(trade.entry * trade.size)
             : null;
         const pnlPct = cost && pnl != null ? pnl / cost : null;
-        const optionType = inferOptionType(trade);
+        const optionType = dotplotInferOptionType(trade);
 
         let pnlLine = "P/L: " + formatCurrency(pnl);
         if (pnlPct != null && isFinite(pnlPct)) {
@@ -3187,133 +3301,6 @@
       function openDotPlotModal() {
         openModalSection("modalDotPlotSection", "Best / Worst Dot Plot");
         drawDotPlot();
-      }
-
-      function initEvents() {
-        tradeForm.addEventListener("submit", handleFormSubmit);
-        resetFormBtn.addEventListener("click", () => {
-          clearForm();
-          showToast("Form cleared");
-        });
-
-        importFileInput.addEventListener("change", () => {
-          const file = importFileInput.files && importFileInput.files[0];
-          fileNameLabel.textContent = file ? file.name : "";
-        });
-
-        importCsvBtn.addEventListener("click", handleImport);
-        exportCsvBtn.addEventListener("click", exportCsv);
-        exportJsonBtn.addEventListener("click", exportJson);
-        clearAllBtn.addEventListener("click", clearAll);
-
-        applyFiltersBtn.addEventListener("click", applyFilters);
-        resetFiltersBtn.addEventListener("click", resetFilters);
-
-        directionFilters.addEventListener("click", (e) => {
-          const pill = e.target.closest(".radio-pill");
-          if (!pill) return;
-          const value = pill.dataset.value;
-          if (!value) return;
-          activeDirectionFilter = value;
-          Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
-            (p) => p.classList.toggle("active", p === pill)
-          );
-          applyFilters();
-        });
-
-        const thead = document.querySelector("thead");
-        if (thead) {
-          thead.addEventListener("click", handleSortClick);
-        }
-
-        if (capitalBasisInput) {
-          capitalBasisInput.addEventListener("change", () => {
-            if (lastRenderMetrics) {
-              updateApyHud(lastRenderMetrics.trades);
-            }
-          });
-        }
-
-        if (kpiWinCard) {
-          kpiWinCard.addEventListener("click", openWinModal);
-        }
-        if (kpiMacdCard) {
-          kpiMacdCard.addEventListener("click", openMacdModal);
-        }
-        if (kpiBestCard) {
-          kpiBestCard.addEventListener("click", openDotPlotModal);
-        }
-
-        if (modalCloseBtn) {
-          modalCloseBtn.addEventListener("click", closeModal);
-        }
-        if (detailModal) {
-          detailModal.addEventListener("click", (e) => {
-            if (e.target === detailModal) {
-              closeModal();
-            }
-          });
-        }
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape") closeModal();
-        });
-
-        if (macdMinInput) {
-          macdMinInput.addEventListener("change", () => {
-            if (!lastRenderMetrics) return;
-            drawMacdChart();
-          });
-        }
-        if (macdMaxInput) {
-          macdMaxInput.addEventListener("change", () => {
-            if (!lastRenderMetrics) return;
-            drawMacdChart();
-          });
-        }
-
-        if (macdTimeframeRow) {
-          macdTimeframeRow.addEventListener("click", (e) => {
-            const pill = e.target.closest(".radio-pill");
-            if (!pill) return;
-            const tf = pill.dataset.timeframe;
-            if (!tf) return;
-            currentMacdTimeframe = tf;
-            Array.from(macdTimeframeRow.querySelectorAll(".radio-pill")).forEach(
-              (p) => p.classList.toggle("active", p === pill)
-            );
-            drawMacdChart();
-          });
-        }
-
-        if (dotplotCanvas) {
-          dotplotCanvas.addEventListener("mousemove", handleDotplotHover);
-          dotplotCanvas.addEventListener("mouseleave", hideDotplotTooltip);
-        }
-      }
-
-      function initDefaults() {
-        if (el("date") && !el("date").value) {
-          const today = new Date();
-          const iso = today.toISOString().slice(0, 10);
-          el("date").value = iso;
-        }
-        if (el("sessionTime") && !el("sessionTime").value) {
-          const now = new Date();
-          const hh = String(now.getHours()).padStart(2, "0");
-          const mm = String(now.getMinutes()).padStart(2, "0");
-          el("sessionTime").value = hh + ":" + mm;
-        }
-      }
-
-      function initAccordions() {
-        document.querySelectorAll(".panel.collapsible").forEach((panel) => {
-          const toggle = panel.querySelector(".accordion-toggle");
-          if (!toggle) return;
-          toggle.addEventListener("click", (e) => {
-            e.stopPropagation();
-            panel.classList.toggle("open");
-          });
-        });
       }
 
       function init() {
