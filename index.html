@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Trading Vitals v0.4.0</title>
+  <title>My Trading Vitals v0.4.1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -35,6 +35,10 @@
       box-sizing: border-box;
     }
 
+    html {
+      font-size: 17px; /* bump all rem-based font sizes slightly for desktop */
+    }
+
     html,
     body {
       margin: 0;
@@ -48,6 +52,7 @@
       font-family: var(--font-main);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
+      line-height: 1.4;
     }
 
     .app-shell {
@@ -123,7 +128,7 @@
     }
 
     .brand-text span.subtitle {
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.16em;
@@ -211,17 +216,18 @@
       justify-content: space-between;
       gap: 8px;
       margin-bottom: 8px;
+      cursor: pointer; /* whole header is clickable */
     }
 
     .panel-title {
-      font-size: 0.83rem;
+      font-size: 0.86rem;
       text-transform: uppercase;
       letter-spacing: 0.18em;
       color: var(--text-muted);
     }
 
     .panel-subtitle {
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       opacity: 0.8;
     }
@@ -245,7 +251,7 @@
     }
 
     .tag {
-      font-size: 0.7rem;
+      font-size: 0.74rem;
       padding: 2px 8px;
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.4);
@@ -277,7 +283,7 @@
     }
 
     label {
-      font-size: 0.7rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -291,7 +297,7 @@
       border: 1px solid rgba(148, 163, 184, 0.4);
       padding: 7px 10px;
       color: var(--text-main);
-      font-size: 0.78rem;
+      font-size: 0.82rem;
       outline: none;
       transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
         background var(--transition-fast), transform 120ms ease-out;
@@ -329,14 +335,14 @@
     input[type="time"]::-webkit-calendar-picker-indicator,
     input[type="datetime-local"]::-webkit-calendar-picker-indicator,
     input[type="month"]::-webkit-calendar-picker-indicator {
-      filter: invert(1);
+      filter: invert(1) brightness(1.2); /* make picker icons bright/white */
     }
 
     button {
       border: none;
       border-radius: 999px;
       padding: 6px 12px;
-      font-size: 0.76rem;
+      font-size: 0.8rem;
       font-weight: 500;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -449,14 +455,14 @@
     }
 
     .kpi-label {
-      font-size: 0.68rem;
+      font-size: 0.74rem;
       text-transform: uppercase;
       letter-spacing: 0.18em;
       color: var(--text-muted);
     }
 
     .kpi-value {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: 600;
       letter-spacing: 0.02em;
     }
@@ -469,7 +475,7 @@
     }
 
     .kpi-tag {
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
     }
 
@@ -589,7 +595,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
     }
 
     thead {
@@ -605,10 +611,11 @@
       text-align: left;
       white-space: nowrap;
       border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+      vertical-align: top;
     }
 
     th {
-      font-size: 0.68rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.16em;
       color: var(--text-muted);
@@ -619,6 +626,35 @@
       font-size: 0.7rem;
       opacity: 0.5;
       margin-left: 4px;
+    }
+
+    .th-label-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .header-filter-pill {
+      margin-top: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      cursor: pointer;
+    }
+
+    .header-filter-pill:hover {
+      background: rgba(37, 99, 235, 0.18);
+      color: var(--accent);
+    }
+
+    td.setup-cell,
+    td.tags-cell,
+    td.notes-cell {
+      white-space: normal;
+      word-break: break-word;
     }
 
     tbody tr {
@@ -818,7 +854,7 @@
     }
 
     .hint-text {
-      font-size: 0.7rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       opacity: 0.9;
     }
@@ -953,6 +989,46 @@
       width: 100%;
       height: 100%;
       display: block;
+    }
+
+    .macd-legend {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: inline-flex;
+      gap: 8px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      backdrop-filter: blur(6px);
+    }
+
+    .macd-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 3px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .legend-fast {
+      background: #4ba3ff;
+    }
+
+    .legend-slow {
+      background: #26d981;
+    }
+
+    .legend-zero {
+      background: #1f2937;
     }
 
     .modal-grid {
@@ -1095,7 +1171,7 @@
       </div>
       <div class="header-meta">
         <div class="pill">
-          <span>v0.4.0 · Local-Only</span>
+          <span>v0.4.1 · Local-Only</span>
         </div>
       </div>
     </header>
@@ -1363,7 +1439,7 @@
           </div>
         </section>
 
-        <!-- Filters (now includes Call/Put toggle) -->
+        <!-- Filters (now includes Option Type but no separate Direction toggle) -->
         <section class="panel collapsible open" data-accordion="filters">
           <div class="panel-header">
             <div class="panel-header-main">
@@ -1398,24 +1474,6 @@
                   id="filterSearch"
                   placeholder="Setup, tags, notes…"
                 />
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label>Direction</label>
-              <div class="radio-row" id="directionFilters">
-                <div class="radio-pill active" data-value="all">
-                  <span class="radio-pill-dot"></span>
-                  <span>All</span>
-                </div>
-                <div class="radio-pill" data-value="Long">
-                  <span class="radio-pill-dot"></span>
-                  <span>Long</span>
-                </div>
-                <div class="radio-pill" data-value="Short">
-                  <span class="radio-pill-dot"></span>
-                  <span>Short</span>
-                </div>
               </div>
             </div>
 
@@ -1501,7 +1559,20 @@
                         Date <span class="sort-indicator">▼</span>
                       </th>
                       <th data-sort-key="ticker">Ticker</th>
-                      <th data-sort-key="direction">Side</th>
+                      <th data-sort-key="direction">
+                        <div class="th-label-row">
+                          <span>Side</span>
+                          <span class="sort-indicator"></span>
+                        </div>
+                        <button
+                          type="button"
+                          class="header-filter-pill"
+                          id="directionHeaderFilter"
+                          title="Filter by side"
+                        >
+                          All
+                        </button>
+                      </th>
                       <th data-sort-key="optionType">Type</th>
                       <th data-sort-key="session">Time</th>
                       <th data-sort-key="entry">Open</th>
@@ -1609,6 +1680,11 @@
 
             <div class="modal-chart">
               <canvas id="macdCanvas"></canvas>
+              <div class="macd-legend">
+                <span><span class="legend-swatch legend-fast"></span>Fast EMA</span>
+                <span><span class="legend-swatch legend-slow"></span>Slow EMA</span>
+                <span><span class="legend-swatch legend-zero"></span>Zero Line</span>
+              </div>
             </div>
 
             <div class="modal-grid" style="margin-top:6px;">
@@ -1739,8 +1815,8 @@
       const applyFiltersBtn = el("applyFiltersBtn");
       const resetFiltersBtn = el("resetFiltersBtn");
       const kpiScopeLabel = el("kpiScopeLabel");
-      const directionFilters = document.getElementById("directionFilters");
       const optionFilters = document.getElementById("optionFilters");
+      const directionHeaderFilter = el("directionHeaderFilter");
 
       const tradesTbody = el("tradesTbody");
       const emptyState = el("emptyState");
@@ -1974,12 +2050,15 @@
         activeDirectionFilter = "all";
         activeOptionFilter = "all";
 
-        Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
-          (pill) => pill.classList.toggle("active", pill.dataset.value === "all")
-        );
-        Array.from(optionFilters.querySelectorAll(".radio-pill")).forEach(
-          (pill) => pill.classList.toggle("active", pill.dataset.value === "all")
-        );
+        if (directionHeaderFilter) {
+          directionHeaderFilter.textContent = "All";
+        }
+
+        if (optionFilters) {
+          Array.from(optionFilters.querySelectorAll(".radio-pill")).forEach(
+            (pill) => pill.classList.toggle("active", pill.dataset.value === "all")
+          );
+        }
 
         kpiScopeLabel.textContent = "Scope: All trades";
         filteredTrades = null;
@@ -2335,14 +2414,14 @@
             <td>${t.exit != null && t.exit !== 0 ? t.exit : "—"}</td>
             <td class="${pnlClass}">${formatCurrency(pnl)}</td>
             <td>${t.size != null && t.size !== 0 ? t.size : "—"}</td>
-            <td>${t.setup || "—"}</td>
-            <td>${t.tags || "—"}</td>
+            <td class="setup-cell">${t.setup || "—"}</td>
+            <td class="tags-cell">${t.tags || "—"}</td>
             <td>${
               t.confidence != null && t.confidence !== ""
                 ? t.confidence + "%"
                 : "—"
             }</td>
-            <td>${t.notes || "—"}</td>
+            <td class="notes-cell">${t.notes || "—"}</td>
             <td>
               <button data-id="${t.id}" class="subtle btn-edit">Edit</button>
               <button data-id="${t.id}" class="danger btn-delete">Del</button>
@@ -2501,6 +2580,17 @@
       function clearForm() {
         tradeForm.reset();
         delete tradeForm.dataset.editId;
+        const dateInput = el("date");
+        const timeInput = el("sessionTime");
+        const now = new Date();
+        if (dateInput) {
+          dateInput.value = now.toISOString().slice(0, 10);
+        }
+        if (timeInput) {
+          const hh = String(now.getHours()).padStart(2, "0");
+          const mm = String(now.getMinutes()).padStart(2, "0");
+          timeInput.value = hh + ":" + mm;
+        }
       }
 
       function handleFormSubmit(e) {
@@ -3042,6 +3132,10 @@
       function handleSortClick(e) {
         const th = e.target.closest("th");
         if (!th) return;
+
+        // avoid treating clicks on header filter pill as sort toggles
+        if (e.target.closest(".header-filter-pill")) return;
+
         const key = th.dataset.sortKey;
         if (!key) return;
 
@@ -3133,7 +3227,7 @@
           maxY += 1;
         }
 
-        const padding = { left: 40, right: 12, top: 12, bottom: 26 };
+        const padding = { left: 40, right: 12, top: 24, bottom: 26 };
         const plotWidth = width - padding.left - padding.right;
         const plotHeight = height - padding.top - padding.bottom;
 
@@ -3494,29 +3588,35 @@
         applyFiltersBtn.addEventListener("click", applyFilters);
         resetFiltersBtn.addEventListener("click", resetFilters);
 
-        directionFilters.addEventListener("click", (e) => {
-          const pill = e.target.closest(".radio-pill");
-          if (!pill) return;
-          const value = pill.dataset.value;
-          if (!value) return;
-          activeDirectionFilter = value;
-          Array.from(directionFilters.querySelectorAll(".radio-pill")).forEach(
-            (p) => p.classList.toggle("active", p === pill)
-          );
-          applyFilters();
-        });
+        if (optionFilters) {
+          optionFilters.addEventListener("click", (e) => {
+            const pill = e.target.closest(".radio-pill");
+            if (!pill) return;
+            const value = pill.dataset.value;
+            if (!value) return;
+            activeOptionFilter = value;
+            Array.from(optionFilters.querySelectorAll(".radio-pill")).forEach(
+              (p) => p.classList.toggle("active", p === pill)
+            );
+            applyFilters();
+          });
+        }
 
-        optionFilters.addEventListener("click", (e) => {
-          const pill = e.target.closest(".radio-pill");
-          if (!pill) return;
-          const value = pill.dataset.value;
-          if (!value) return;
-          activeOptionFilter = value;
-          Array.from(optionFilters.querySelectorAll(".radio-pill")).forEach(
-            (p) => p.classList.toggle("active", p === pill)
-          );
-          applyFilters();
-        });
+        if (directionHeaderFilter) {
+          directionHeaderFilter.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (activeDirectionFilter === "all") {
+              activeDirectionFilter = "Long";
+            } else if (activeDirectionFilter === "Long") {
+              activeDirectionFilter = "Short";
+            } else {
+              activeDirectionFilter = "all";
+            }
+            directionHeaderFilter.textContent =
+              activeDirectionFilter === "all" ? "All" : activeDirectionFilter;
+            applyFilters();
+          });
+        }
 
         const thead = document.querySelector("thead");
         if (thead) {
@@ -3592,27 +3692,41 @@
       }
 
       function initDefaults() {
-        if (el("date") && !el("date").value) {
-          const today = new Date();
-          const iso = today.toISOString().slice(0, 10);
-          el("date").value = iso;
+        const dateInput = el("date");
+        const timeInput = el("sessionTime");
+        const now = new Date();
+        const iso = now.toISOString().slice(0, 10);
+        if (dateInput && !dateInput.value) {
+          dateInput.value = iso;
         }
-        if (el("sessionTime") && !el("sessionTime").value) {
-          const now = new Date();
+        if (timeInput && !timeInput.value) {
           const hh = String(now.getHours()).padStart(2, "0");
           const mm = String(now.getMinutes()).padStart(2, "0");
-          el("sessionTime").value = hh + ":" + mm;
+          timeInput.value = hh + ":" + mm;
         }
       }
 
       function initAccordions() {
         document.querySelectorAll(".panel.collapsible").forEach((panel) => {
           const toggle = panel.querySelector(".accordion-toggle");
-          if (!toggle) return;
-          toggle.addEventListener("click", (e) => {
-            e.stopPropagation();
+          const header = panel.querySelector(".panel-header");
+
+          const togglePanel = (e) => {
+            if (e) e.stopPropagation();
             panel.classList.toggle("open");
-          });
+          };
+
+          if (toggle) {
+            toggle.addEventListener("click", togglePanel);
+          }
+
+          if (header) {
+            header.addEventListener("click", (e) => {
+              // avoid double-toggling when clicking directly on the arrow button
+              if (e.target.closest(".accordion-toggle")) return;
+              togglePanel(e);
+            });
+          }
         });
         // Import panel closed by default for a streamlined surface
         const importPanel = document.querySelector('[data-accordion="import"]');
